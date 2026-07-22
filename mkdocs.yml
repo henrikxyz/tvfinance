@@ -1,0 +1,40 @@
+site_name: tvfinance
+site_description: Typed sync and async financial market data tools
+site_url: https://tvfinance.github.io/tvfinance/
+repo_url: https://github.com/tvfinance/tvfinance
+repo_name: tvfinance/tvfinance
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Quality gates: architecture/quality-gates.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+
+strict: true
