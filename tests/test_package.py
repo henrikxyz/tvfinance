@@ -6,7 +6,7 @@ import tvfinance
 
 
 def test_package_version() -> None:
-    assert tvfinance.__version__ == "2.0.0.dev0"
+    assert tvfinance.__version__ == "26.0.0.dev0"
 
 
 def test_package_declares_optional_interfaces() -> None:

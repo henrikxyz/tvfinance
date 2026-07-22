@@ -12,7 +12,7 @@ from tvfinance.core import Symbol
 
 def test_cli_version_and_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--version"]) == 0
-    assert "2.0.0.dev0" in capsys.readouterr().out
+    assert "26.0.0.dev0" in capsys.readouterr().out
     assert main([]) == 0
     assert "usage:" in capsys.readouterr().out
 

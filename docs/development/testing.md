@@ -24,7 +24,7 @@ Public endpoint contract checks are opt-in:
 
 ~~~powershell
 $env:TVFINANCE_LIVE = "1"
-uv run pytest -m live
+uv run pytest -m live --no-cov
 ~~~
 
 They are excluded from normal reliability expectations because availability,

@@ -2448,7 +2448,7 @@ wheels = [
 
 [[package]]
 name = "tvfinance"
-version = "2.0.0.dev0"
+version = "26.0.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "curl-cffi" },

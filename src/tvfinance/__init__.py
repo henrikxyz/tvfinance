@@ -49,7 +49,7 @@ from tvfinance.core.models import (
 )
 from tvfinance.ticker import AsyncTicker, AsyncTickers, Ticker, Tickers
 
-__version__ = "2.0.0.dev0"
+__version__ = "26.0.0.dev0"
 
 __all__ = [
     "AsyncClient",

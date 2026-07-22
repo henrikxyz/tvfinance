@@ -1,24 +1,37 @@
 # Improvement roadmap
 
-## Completed for 2.0 alpha
+This document records what the rebuild delivered and separates it from optional
+future improvements. Items in the final section are not missing requirements
+for version 26.0.0.dev0.
 
-- Unified typed architecture and transport stack.
-- Sync, native async, CLI, and optional MCP interfaces.
-- Search, quotes, live updates, screening, history, options, news, calendars,
-  and research pages.
-- Single- and multi-symbol object facades.
-- Strict formatting, lint, typing, coverage, documentation, and build checks.
-- Cross-platform CI and release automation.
+## 26.0.0.dev0 delivery status
 
-## Next hardening milestones
+| Area | Status | Verification |
+| --- | --- | --- |
+| Typed core and transport | Complete | Ruff, mypy, offline tests |
+| Sync and native async APIs | Complete | Namespace and client tests |
+| Quotes and live updates | Complete | Protocol fixtures and public live test |
+| History and options | Complete | Protocol and parser fixtures |
+| News, calendars, and research | Complete | HTTP and HTML fixtures |
+| CLI and optional MCP | Complete | Command and server registration tests |
+| Packaging and documentation | Complete | Strict docs and wheel smoke test |
+| CI and release workflows | Complete | Local syntax validation |
 
-1. Add recorded contract fixtures for a broader set of asset classes and
-   locales.
-2. Add an opt-in scheduled live compatibility workflow with conservative rate
-   limits.
-3. Introduce a persistent cache adapter protocol without changing domain APIs.
-4. Publish compatibility notes whenever upstream response fields change.
-5. Promote the API from alpha after real-world feedback confirms stable
-   provider behavior.
+The public search and quote contract was tested successfully on 2026-07-22.
 
-These are post-alpha improvements, not missing public interfaces.
+## Release sequence
+
+1. Continue development under version 26.0.0.dev0.
+2. Run the complete offline quality gate before every commit.
+3. Run the opt-in public endpoint test before a release candidate.
+4. Change to 26.0.0rc1 only when a release candidate is requested.
+5. Tag and publish only after explicit approval.
+
+## Optional future improvements
+
+- Broaden recorded fixtures across more asset classes and locales.
+- Add a scheduled, conservatively rate-limited live compatibility workflow.
+- Add a persistent cache adapter while preserving the current domain API.
+- Publish compatibility notes when upstream response fields change.
+
+These are hardening opportunities, not unfinished 26.0.0.dev0 functionality.
