@@ -1,6 +1,6 @@
 # Changelog
 
-## 26.0.0.dev0
+## 26.0.0
 
 - Rebuilt the package around typed async-first domain services.
 - Unified sync, async, CLI, and optional MCP interfaces.

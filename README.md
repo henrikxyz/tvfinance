@@ -78,7 +78,8 @@ uv build
 
 ## Status
 
-The 2.0 line is an alpha release. Provider endpoints are unofficial and may
-change. This project is for research and does not provide financial advice.
+Version 26.0.0 is the first production release of the rebuilt package. Provider
+endpoints are unofficial and may change. This project is for research and does
+not provide financial advice.
 The project was substantially created with LLM assistance; read the
 [AI disclosure](AI_DISCLOSURE.md) before use or contribution.

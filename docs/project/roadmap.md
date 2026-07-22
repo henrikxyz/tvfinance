@@ -1,9 +1,9 @@
 # Improvement roadmap
 
 This document records the completed rebuild and its verification status for
-version 26.0.0.dev0.
+version 26.0.0.
 
-## 26.0.0.dev0 delivery status
+## 26.0.0 delivery status
 
 | Area | Status | Verification |
 | --- | --- | --- |
@@ -25,11 +25,10 @@ The public search and quote contract was tested successfully on 2026-07-22.
 
 ## Release sequence
 
-1. Continue development under version 26.0.0.dev0.
-2. Run the complete offline quality gate before every commit.
-3. Run the opt-in public endpoint test before a release candidate.
-4. Change to 26.0.0rc1 only when a release candidate is requested.
-5. Tag and publish only after explicit approval.
+1. Run the complete offline quality gate before every commit.
+2. Run the opt-in public endpoint test before a release.
+3. Create the signed `v26.0.0` tag after approval.
+4. Publish through the PyPI trusted publisher workflow.
 
 ## Completion condition
 
