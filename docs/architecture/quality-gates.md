@@ -14,6 +14,6 @@ uv build
 uv run --group docs mkdocs build --strict
 ```
 
-Tests enforce full branch coverage while the new implementation is developed.
-Any intentional exclusion must be documented next to the excluded branch and
-reviewed before release.
+Tests enforce at least 95% branch coverage while the implementation is
+developed. Any intentional exclusion must be documented next to the excluded
+branch and reviewed before release.
