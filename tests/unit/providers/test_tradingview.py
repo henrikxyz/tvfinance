@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import cast
@@ -14,8 +15,11 @@ from tvfinance.core import (
     Locale,
     ParseError,
     RateLimitError,
+    RequestTimeoutError,
     TransportError,
 )
+from tvfinance.core.exceptions import ProtocolError
+from tvfinance.core.websocket import encode_frame
 from tvfinance.providers import TradingViewProvider
 
 
@@ -149,3 +153,127 @@ async def test_provider_rejects_non_object_scanner_response() -> None:
     api, _ = provider(response("[]"))
     with pytest.raises(ParseError):
         await api.screener()
+
+
+class FakeSocket:
+    def __init__(self, responses: list[str]) -> None:
+        self.responses = responses
+        self.sent: list[str] = []
+        self.closed = 0
+
+    async def send_text(self, message: str) -> None:
+        self.sent.append(message)
+
+    async def receive_text(self, *, timeout: float) -> str:
+        if not self.responses:
+            raise RequestTimeoutError()
+        return self.responses.pop(0)
+
+    async def close(self) -> None:
+        self.closed += 1
+
+
+def framed(method: str, params: object) -> str:
+    return encode_frame(json.dumps({"m": method, "p": params}))
+
+
+@pytest.mark.asyncio
+async def test_provider_history_and_option_series(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api, _ = provider()
+    history_socket = FakeSocket(
+        [
+            framed(
+                "timescale_update",
+                ["x", {"s": {"s": [{"v": [1, 1, 2, 0, 1.5, 9]}]}}],
+            )
+            + framed("series_completed", [])
+        ]
+    )
+    option_socket = FakeSocket(
+        [
+            framed(
+                "qsd",
+                [
+                    "x",
+                    {
+                        "v": {
+                            "options-info": {
+                                "series": [
+                                    {"root": "AAPL", "expiration": 20261218},
+                                    {"name": "AAPL", "expirations": [20270115]},
+                                ]
+                            }
+                        }
+                    },
+                ],
+            )
+        ]
+    )
+    sockets = [history_socket, option_socket]
+
+    async def open_socket(url: str, *, headers: dict[str, str]) -> FakeSocket:
+        return sockets.pop(0)
+
+    monkeypatch.setattr(api.session, "open_websocket", open_socket)
+    candles = await api.history("NASDAQ:AAPL", count=1)
+    assert candles[0].close == 1.5
+    assert history_socket.closed == 1
+    series = await api.option_series("NASDAQ:AAPL")
+    assert [(item.root, item.expiration) for item in series] == [
+        ("AAPL", 20261218),
+        ("AAPL", 20270115),
+    ]
+    assert option_socket.closed == 1
+
+
+@pytest.mark.asyncio
+async def test_provider_option_series_timeout_and_unknown_research(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api, _ = provider()
+    socket = FakeSocket([framed("qsd", ["x", {"v": {}}])])
+
+    async def open_socket(url: str, *, headers: dict[str, str]) -> FakeSocket:
+        return socket
+
+    monkeypatch.setattr(api.session, "open_websocket", open_socket)
+    with pytest.raises(TransportError):
+        await api.option_series("NASDAQ:AAPL")
+    with pytest.raises(ProtocolError):
+        await api.research("NASDAQ:AAPL", "unknown")
+
+
+@pytest.mark.asyncio
+async def test_provider_research_and_news_body() -> None:
+    markup = (
+        b"<html><table><tr><th>Name</th></tr><tr><td>Apple</td></tr></table></html>"
+    )
+    api, _ = provider(HttpResponse(200, markup))
+    research_result = await api.research("NASDAQ:AAPL", "profile")
+    assert research_result.records[0]["name"] == "Apple"
+
+    payload = (
+        b'{"items":[{"id":"n1","title":"Title","published":1,"storyPath":"/story"}]}'
+    )
+    article = b"<article><p>Article body</p></article>"
+    api, _ = provider(HttpResponse(200, payload), HttpResponse(200, article))
+    articles = await api.news("NASDAQ:AAPL", fetch_body=True)
+    assert articles[0].body_markdown == "Article body"
+
+
+@pytest.mark.asyncio
+async def test_provider_corporate_calendars() -> None:
+    rows = '{"data":[{"s":"NASDAQ:AAPL","d":["Apple","Apple Inc",1,2,3,4,5,6]}]}'
+    api, transport = provider(*(response(rows) for _ in range(4)))
+    start = datetime.fromtimestamp(0, tz=timezone.utc)
+    end = datetime.fromtimestamp(10, tz=timezone.utc)
+    for category in ("earnings", "revenue", "dividends", "ipo"):
+        events = await api.corporate_calendar(
+            category, from_date=start, to_date=end, limit=1
+        )
+        assert events[0].category == category
+    assert len(transport.requests) == 4
+    with pytest.raises(ProtocolError):
+        await api.corporate_calendar("unknown", from_date=start, to_date=end)

@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Coroutine
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, TypeVar
 
 from tvfinance.core.cache import MemoryResponseCache
 from tvfinance.core.exceptions import ConfigurationError, RequestTimeoutError
 from tvfinance.core.models import (
     CalendarEvent,
+    Candle,
     NewsArticle,
     OptionChainRow,
+    OptionSeries,
     Quote,
+    ResearchData,
     ScreenerRow,
     Symbol,
     SymbolSearchResult,
@@ -79,11 +82,36 @@ class AsyncClient:
         self,
         symbol: str | Symbol,
         *,
-        expiration: int,
-        root: str,
+        expiration: int | None = None,
+        root: str | None = None,
     ) -> list[OptionChainRow]:
+        if expiration is None or root is None:
+            series = await self.option_series(symbol)
+            if not series:
+                return []
+            selected = next(
+                (item for item in series if root is None or item.root == root),
+                series[0],
+            )
+            expiration = expiration or selected.expiration
+            root = root or selected.root
         return await self.provider.options_chain(
             symbol, expiration=expiration, root=root
+        )
+
+    async def option_series(self, symbol: str | Symbol) -> list[OptionSeries]:
+        return await self.provider.option_series(symbol)
+
+    async def history(
+        self,
+        symbol: str | Symbol,
+        *,
+        resolution: str = "1D",
+        count: int | str | None = None,
+        adjustment: str = "splits",
+    ) -> list[Candle]:
+        return await self.provider.history(
+            symbol, resolution=resolution, count=count, adjustment=adjustment
         )
 
     async def news(
@@ -92,8 +120,35 @@ class AsyncClient:
         *,
         limit: int = 10,
         language: str | None = None,
+        fetch_body: bool = False,
     ) -> list[NewsArticle]:
-        return await self.provider.news(symbol, limit=limit, language=language)
+        return await self.provider.news(
+            symbol, limit=limit, language=language, fetch_body=fetch_body
+        )
+
+    async def news_markdown(
+        self, symbol: str | Symbol, *, limit: int = 10, language: str | None = None
+    ) -> str:
+        articles = await self.news(
+            symbol, limit=limit, language=language, fetch_body=True
+        )
+        return "\n\n---\n\n".join(article.to_markdown() for article in articles)
+
+    async def research(self, symbol: str | Symbol, section: str) -> ResearchData:
+        return await self.provider.research(symbol, section)
+
+    async def corporate_calendar(
+        self,
+        category: str,
+        *,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int = 100,
+    ) -> list[CalendarEvent]:
+        start, end = _date_range(from_date, to_date)
+        return await self.provider.corporate_calendar(
+            category, from_date=start, to_date=end, limit=limit
+        )
 
     async def economic_calendar(
         self,
@@ -150,55 +205,68 @@ class Client:
     async def _client(self) -> AsyncClient:
         return AsyncClient(settings=self.settings, cache=self.cache)
 
-    def search(self, query: str) -> list[SymbolSearchResult]:
-        async def operation() -> list[SymbolSearchResult]:
+    def _run(self, operation: Callable[[AsyncClient], Coroutine[Any, Any, T]]) -> T:
+        async def scoped() -> T:
             async with await self._client() as client:
-                return await client.search(query)
+                return await operation(client)
 
-        return run_sync(operation)
+        return run_sync(scoped)
+
+    def search(self, query: str) -> list[SymbolSearchResult]:
+        return self._run(lambda client: client.search(query))
 
     def quote(self, symbol: str | Symbol) -> Quote:
-        async def operation() -> Quote:
-            async with await self._client() as client:
-                return await client.quote(symbol)
-
-        return run_sync(operation)
+        return self._run(lambda client: client.quote(symbol))
 
     def quotes(self, symbols: list[str | Symbol]) -> dict[str, Quote | None]:
-        async def operation() -> dict[str, Quote | None]:
-            async with await self._client() as client:
-                return await client.quotes(symbols)
-
-        return run_sync(operation)
+        return self._run(lambda client: client.quotes(symbols))
 
     def screener(self, **kwargs: Any) -> list[ScreenerRow]:
-        async def operation() -> list[ScreenerRow]:
-            async with await self._client() as client:
-                return await client.screener(**kwargs)
-
-        return run_sync(operation)
+        return self._run(lambda client: client.screener(**kwargs))
 
     def options_chain(
-        self, symbol: str | Symbol, *, expiration: int, root: str
+        self,
+        symbol: str | Symbol,
+        *,
+        expiration: int | None = None,
+        root: str | None = None,
     ) -> list[OptionChainRow]:
-        async def operation() -> list[OptionChainRow]:
-            async with await self._client() as client:
-                return await client.options_chain(
-                    symbol, expiration=expiration, root=root
-                )
+        return self._run(
+            lambda client: client.options_chain(
+                symbol, expiration=expiration, root=root
+            )
+        )
 
-        return run_sync(operation)
+    def option_series(self, symbol: str | Symbol) -> list[OptionSeries]:
+        return self._run(lambda client: client.option_series(symbol))
+
+    def history(self, symbol: str | Symbol, **kwargs: Any) -> list[Candle]:
+        return self._run(lambda client: client.history(symbol, **kwargs))
 
     def news(self, symbol: str | Symbol, **kwargs: Any) -> list[NewsArticle]:
-        async def operation() -> list[NewsArticle]:
-            async with await self._client() as client:
-                return await client.news(symbol, **kwargs)
+        return self._run(lambda client: client.news(symbol, **kwargs))
 
-        return run_sync(operation)
+    def news_markdown(self, symbol: str | Symbol, **kwargs: Any) -> str:
+        return self._run(lambda client: client.news_markdown(symbol, **kwargs))
+
+    def research(self, symbol: str | Symbol, section: str) -> ResearchData:
+        return self._run(lambda client: client.research(symbol, section))
+
+    def corporate_calendar(self, category: str, **kwargs: Any) -> list[CalendarEvent]:
+        return self._run(lambda client: client.corporate_calendar(category, **kwargs))
 
     def economic_calendar(self, **kwargs: Any) -> list[CalendarEvent]:
-        async def operation() -> list[CalendarEvent]:
-            async with await self._client() as client:
-                return await client.economic_calendar(**kwargs)
+        return self._run(lambda client: client.economic_calendar(**kwargs))
 
-        return run_sync(operation)
+
+def _date_range(
+    from_date: datetime | None, to_date: datetime | None
+) -> tuple[datetime, datetime]:
+    now = datetime.now(timezone.utc)
+    start = from_date or now - timedelta(days=1)
+    end = to_date or now + timedelta(days=7)
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
+    if end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+    return start, end

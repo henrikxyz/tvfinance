@@ -106,6 +106,22 @@ class NewsArticle(SerializableModel):
     body_markdown: str | None = None
     symbols: tuple[Symbol, ...] = ()
 
+    def to_markdown(self) -> str:
+        """Render the article as portable Markdown."""
+        lines = [f"# {self.title}", ""]
+        metadata = [f"Source: {self.source}"] if self.source else []
+        metadata.append(f"Published: {self.published_at.isoformat()}")
+        if self.url:
+            metadata.append(f"URL: {self.url}")
+        if self.symbols:
+            metadata.append("Symbols: " + ", ".join(map(str, self.symbols)))
+        lines.extend(metadata)
+        if self.summary:
+            lines.extend(["", self.summary])
+        if self.body_markdown:
+            lines.extend(["", self.body_markdown.strip()])
+        return "\n".join(lines).strip() + "\n"
+
 
 @dataclass(frozen=True, slots=True)
 class OptionContract(SerializableModel):
@@ -151,3 +167,21 @@ class CalendarEvent(SerializableModel):
     estimate: JsonValue = None
     previous: JsonValue = None
     extra: dict[str, JsonValue] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchData(SerializableModel):
+    """Normalized data extracted from one symbol research section."""
+
+    symbol: Symbol
+    section: str
+    records: tuple[dict[str, JsonValue], ...] = ()
+    summary: dict[str, JsonValue] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class OptionSeries(SerializableModel):
+    """One selectable option root and expiration combination."""
+
+    root: str
+    expiration: int

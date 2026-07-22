@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from tvfinance.core.cache import MemoryResponseCache
-from tvfinance.core.contracts import AsyncHttpTransport, HttpRequest, HttpResponse
+from tvfinance.core.contracts import (
+    AsyncHttpTransport,
+    AsyncWebSocket,
+    HttpRequest,
+    HttpResponse,
+)
 from tvfinance.core.settings import ClientSettings
 from tvfinance.core.transport import CachedTransport, CurlHttpTransport, RetryTransport
 
@@ -32,6 +37,14 @@ class AsyncClientSession:
 
     async def request(self, request: HttpRequest) -> HttpResponse:
         return await self._transport.send(request)
+
+    async def open_websocket(
+        self, url: str, *, headers: dict[str, str]
+    ) -> AsyncWebSocket:
+        """Open a provider WebSocket using the package HTTP backend."""
+        from tvfinance.core.websocket import CurlWebSocket
+
+        return await CurlWebSocket.open(url, headers=headers)
 
     async def close(self) -> None:
         if not self._closed:

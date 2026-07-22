@@ -8,9 +8,12 @@ from typing import Any
 from tvfinance.client import AsyncClient
 from tvfinance.core.models import (
     CalendarEvent,
+    Candle,
     NewsArticle,
     OptionChainRow,
+    OptionSeries,
     Quote,
+    ResearchData,
     ScreenerRow,
     Symbol,
     SymbolSearchResult,
@@ -38,15 +41,95 @@ async def screener(**kwargs: Any) -> list[ScreenerRow]:
 
 
 async def options_chain(
-    symbol: str | Symbol, *, expiration: int, root: str
+    symbol: str | Symbol,
+    *,
+    expiration: int | None = None,
+    root: str | None = None,
 ) -> list[OptionChainRow]:
     async with AsyncClient() as client:
         return await client.options_chain(symbol, expiration=expiration, root=root)
 
 
+async def option_series(symbol: str | Symbol) -> list[OptionSeries]:
+    async with AsyncClient() as client:
+        return await client.option_series(symbol)
+
+
+async def history(symbol: str | Symbol, **kwargs: Any) -> list[Candle]:
+    async with AsyncClient() as client:
+        return await client.history(symbol, **kwargs)
+
+
 async def news(symbol: str | Symbol, **kwargs: Any) -> list[NewsArticle]:
     async with AsyncClient() as client:
         return await client.news(symbol, **kwargs)
+
+
+async def news_markdown(symbol: str | Symbol, **kwargs: Any) -> str:
+    async with AsyncClient() as client:
+        return await client.news_markdown(symbol, **kwargs)
+
+
+async def research(symbol: str | Symbol, section: str) -> ResearchData:
+    async with AsyncClient() as client:
+        return await client.research(symbol, section)
+
+
+async def bonds(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "bonds")
+
+
+async def etfs(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "etfs")
+
+
+async def documents(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "documents")
+
+
+async def holdings(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "holdings")
+
+
+async def ideas(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "ideas")
+
+
+async def financials(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "financials")
+
+
+async def forecast(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "forecast")
+
+
+async def technicals(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "technicals")
+
+
+async def profile(symbol: str | Symbol) -> ResearchData:
+    return await research(symbol, "profile")
+
+
+async def corporate_calendar(category: str, **kwargs: Any) -> list[CalendarEvent]:
+    async with AsyncClient() as client:
+        return await client.corporate_calendar(category, **kwargs)
+
+
+async def earnings(**kwargs: Any) -> list[CalendarEvent]:
+    return await corporate_calendar("earnings", **kwargs)
+
+
+async def revenue(**kwargs: Any) -> list[CalendarEvent]:
+    return await corporate_calendar("revenue", **kwargs)
+
+
+async def dividends(**kwargs: Any) -> list[CalendarEvent]:
+    return await corporate_calendar("dividends", **kwargs)
+
+
+async def ipo(**kwargs: Any) -> list[CalendarEvent]:
+    return await corporate_calendar("ipo", **kwargs)
 
 
 async def economic_calendar(
@@ -63,11 +146,29 @@ async def economic_calendar(
 
 __all__ = [
     "AsyncClient",
+    "bonds",
+    "corporate_calendar",
+    "dividends",
+    "documents",
+    "earnings",
     "economic_calendar",
+    "etfs",
+    "financials",
+    "forecast",
+    "history",
+    "holdings",
+    "ideas",
+    "ipo",
     "news",
+    "news_markdown",
+    "option_series",
     "options_chain",
+    "profile",
     "quote",
     "quotes",
+    "research",
+    "revenue",
     "screener",
     "search",
+    "technicals",
 ]
