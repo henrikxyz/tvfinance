@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Coroutine
+from collections.abc import AsyncIterator, Callable, Coroutine
 from datetime import datetime, timedelta, timezone
 from typing import Any, TypeVar
 
@@ -60,6 +60,10 @@ class AsyncClient:
                 context={"symbol": normalized},
             )
         return quote
+
+    async def stream_quotes(self, symbols: list[str | Symbol]) -> AsyncIterator[Quote]:
+        async for quote in self.provider.stream_quotes(symbols):
+            yield quote
 
     async def screener(
         self,
@@ -153,15 +157,21 @@ class AsyncClient:
     async def economic_calendar(
         self,
         *,
-        from_date: datetime,
-        to_date: datetime,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
         countries: list[str] | None = None,
+        importance: int | list[int] | None = None,
     ) -> list[CalendarEvent]:
-        return await self.provider.economic_calendar(
-            from_date=from_date,
-            to_date=to_date,
+        start, end = _date_range(from_date, to_date)
+        events = await self.provider.economic_calendar(
+            from_date=start,
+            to_date=end,
             countries=countries,
         )
+        if importance is None:
+            return events
+        selected = {importance} if isinstance(importance, int) else set(importance)
+        return [event for event in events if event.importance in selected]
 
     async def close(self) -> None:
         if self._owns_session:

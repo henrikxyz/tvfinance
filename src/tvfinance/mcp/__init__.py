@@ -34,12 +34,63 @@ async def query_screener(
 
 
 async def get_options_chain(
-    symbol: str, expiration: int, root: str
+    symbol: str, expiration: int | None = None, root: str | None = None
 ) -> list[dict[str, Any]]:
     return [
         item.to_dict()
         for item in await aio.options_chain(symbol, expiration=expiration, root=root)
     ]
+
+
+async def get_option_series(symbol: str) -> list[dict[str, Any]]:
+    return [item.to_dict() for item in await aio.option_series(symbol)]
+
+
+async def get_history(
+    symbol: str, resolution: str = "1D", count: int = 300
+) -> list[dict[str, Any]]:
+    return [
+        item.to_dict()
+        for item in await aio.history(symbol, resolution=resolution, count=count)
+    ]
+
+
+async def get_research(symbol: str, section: str) -> dict[str, Any]:
+    return (await aio.research(symbol, section)).to_dict()
+
+
+async def get_corporate_calendar(
+    category: str,
+    from_date: str | None = None,
+    to_date: str | None = None,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    return [
+        item.to_dict()
+        for item in await aio.corporate_calendar(
+            category,
+            from_date=datetime.fromisoformat(from_date) if from_date else None,
+            to_date=datetime.fromisoformat(to_date) if to_date else None,
+            limit=limit,
+        )
+    ]
+
+
+async def get_news_markdown(symbol: str, limit: int = 10) -> str:
+    return await aio.news_markdown(symbol, limit=limit)
+
+
+async def get_quote_updates(
+    symbols: list[str], updates: int = 1
+) -> list[dict[str, Any]]:
+    if updates <= 0:
+        return []
+    result: list[dict[str, Any]] = []
+    async for quote in aio.stream_quotes(cast(list[str | Symbol], symbols)):
+        result.append(quote.to_dict())
+        if len(result) >= updates:
+            break
+    return result
 
 
 async def get_news(symbol: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -67,6 +118,12 @@ TOOLS = (
     get_quotes,
     query_screener,
     get_options_chain,
+    get_option_series,
+    get_history,
+    get_research,
+    get_corporate_calendar,
+    get_news_markdown,
+    get_quote_updates,
     get_news,
     get_economic_calendar,
 )

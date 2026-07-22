@@ -49,6 +49,14 @@ def option_series(symbol: str | Symbol) -> list[OptionSeries]:
     return Client().option_series(symbol)
 
 
+def options_info(symbol: str | Symbol) -> list[OptionSeries]:
+    return option_series(symbol)
+
+
+def options_series(symbol: str | Symbol) -> list[OptionSeries]:
+    return option_series(symbol)
+
+
 def history(symbol: str | Symbol, **kwargs: Any) -> list[Candle]:
     return Client().history(symbol, **kwargs)
 
@@ -75,6 +83,10 @@ def etfs(symbol: str | Symbol) -> ResearchData:
 
 def documents(symbol: str | Symbol) -> ResearchData:
     return research(symbol, "documents")
+
+
+def docs(symbol: str | Symbol) -> ResearchData:
+    return documents(symbol)
 
 
 def holdings(symbol: str | Symbol) -> ResearchData:
@@ -123,10 +135,29 @@ def ipo(**kwargs: Any) -> list[CalendarEvent]:
 
 def economic_calendar(
     *,
-    from_date: datetime,
-    to_date: datetime,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
     countries: list[str] | None = None,
+    importance: int | list[int] | None = None,
 ) -> list[CalendarEvent]:
     return Client().economic_calendar(
-        from_date=from_date, to_date=to_date, countries=countries
+        from_date=from_date,
+        to_date=to_date,
+        countries=countries,
+        importance=importance,
+    )
+
+
+def calendar(
+    *,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    countries: list[str] | None = None,
+    importance: int | list[int] | None = None,
+) -> list[CalendarEvent]:
+    return economic_calendar(
+        from_date=from_date,
+        to_date=to_date,
+        countries=countries,
+        importance=importance,
     )

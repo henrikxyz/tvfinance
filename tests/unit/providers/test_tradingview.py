@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from datetime import datetime, timezone
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -226,6 +226,47 @@ async def test_provider_history_and_option_series(
         ("AAPL", 20270115),
     ]
     assert option_socket.closed == 1
+
+
+@pytest.mark.asyncio
+async def test_provider_stream_quotes(monkeypatch: pytest.MonkeyPatch) -> None:
+    api, _ = provider()
+    socket = FakeSocket(
+        [
+            "~h~1",
+            framed(
+                "qsd",
+                [
+                    "x",
+                    {
+                        "n": "NASDAQ:AAPL",
+                        "v": {
+                            "lp": 200,
+                            "ch": 2,
+                            "chp": 1,
+                            "volume": 10,
+                            "bid": 199,
+                            "ask": 201,
+                            "currency_code": "USD",
+                            "rtc": 1,
+                        },
+                    },
+                ],
+            ),
+        ]
+    )
+
+    async def open_socket(url: str, *, headers: dict[str, str]) -> FakeSocket:
+        return socket
+
+    monkeypatch.setattr(api.session, "open_websocket", open_socket)
+    stream = api.stream_quotes(["NASDAQ:AAPL"])
+    quote = await anext(stream)
+    assert quote.last == 200
+    assert quote.currency == "USD"
+    await cast(Any, stream).aclose()
+    assert "~h~1" in socket.sent
+    assert socket.closed == 1
 
 
 @pytest.mark.asyncio

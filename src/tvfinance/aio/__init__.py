@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import Any
 
@@ -35,6 +36,12 @@ async def quotes(symbols: list[str | Symbol]) -> dict[str, Quote | None]:
         return await client.quotes(symbols)
 
 
+async def stream_quotes(symbols: list[str | Symbol]) -> AsyncIterator[Quote]:
+    async with AsyncClient() as client:
+        async for item in client.stream_quotes(symbols):
+            yield item
+
+
 async def screener(**kwargs: Any) -> list[ScreenerRow]:
     async with AsyncClient() as client:
         return await client.screener(**kwargs)
@@ -53,6 +60,14 @@ async def options_chain(
 async def option_series(symbol: str | Symbol) -> list[OptionSeries]:
     async with AsyncClient() as client:
         return await client.option_series(symbol)
+
+
+async def options_info(symbol: str | Symbol) -> list[OptionSeries]:
+    return await option_series(symbol)
+
+
+async def options_series(symbol: str | Symbol) -> list[OptionSeries]:
+    return await option_series(symbol)
 
 
 async def history(symbol: str | Symbol, **kwargs: Any) -> list[Candle]:
@@ -85,6 +100,10 @@ async def etfs(symbol: str | Symbol) -> ResearchData:
 
 async def documents(symbol: str | Symbol) -> ResearchData:
     return await research(symbol, "documents")
+
+
+async def docs(symbol: str | Symbol) -> ResearchData:
+    return await documents(symbol)
 
 
 async def holdings(symbol: str | Symbol) -> ResearchData:
@@ -134,21 +153,42 @@ async def ipo(**kwargs: Any) -> list[CalendarEvent]:
 
 async def economic_calendar(
     *,
-    from_date: datetime,
-    to_date: datetime,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
     countries: list[str] | None = None,
+    importance: int | list[int] | None = None,
 ) -> list[CalendarEvent]:
     async with AsyncClient() as client:
         return await client.economic_calendar(
-            from_date=from_date, to_date=to_date, countries=countries
+            from_date=from_date,
+            to_date=to_date,
+            countries=countries,
+            importance=importance,
         )
+
+
+async def calendar(
+    *,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+    countries: list[str] | None = None,
+    importance: int | list[int] | None = None,
+) -> list[CalendarEvent]:
+    return await economic_calendar(
+        from_date=from_date,
+        to_date=to_date,
+        countries=countries,
+        importance=importance,
+    )
 
 
 __all__ = [
     "AsyncClient",
     "bonds",
+    "calendar",
     "corporate_calendar",
     "dividends",
+    "docs",
     "documents",
     "earnings",
     "economic_calendar",
@@ -163,6 +203,8 @@ __all__ = [
     "news_markdown",
     "option_series",
     "options_chain",
+    "options_info",
+    "options_series",
     "profile",
     "quote",
     "quotes",
@@ -170,5 +212,6 @@ __all__ = [
     "revenue",
     "screener",
     "search",
+    "stream_quotes",
     "technicals",
 ]

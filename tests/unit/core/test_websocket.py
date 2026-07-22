@@ -32,3 +32,9 @@ def test_invalid_frame(frame: str) -> None:
 
 def test_incomplete_length_header_is_buffered() -> None:
     assert decode_frames("~m~12") == ([], "~m~12")
+
+
+def test_round_trip_unicode_frame() -> None:
+    messages, remainder = decode_frames(encode_frame("台灣") + encode_frame("ok"))
+    assert messages == ["台灣", "ok"]
+    assert remainder == ""

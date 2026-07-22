@@ -7,7 +7,7 @@ import pytest
 
 from tvfinance import aio, api
 from tvfinance.core.models import NewsArticle, Symbol
-from tvfinance.ticker import AsyncTicker, Ticker
+from tvfinance.ticker import AsyncTicker, AsyncTickers, Ticker, Tickers
 
 
 class FakeClient:
@@ -49,6 +49,9 @@ class FakeAsyncClient:
     async def corporate_calendar(self, category: str, **kwargs: Any) -> Any:
         return category, kwargs
 
+    async def stream_quotes(self, symbols: object) -> Any:
+        yield symbols
+
 
 def test_sync_extended_namespace(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(api, "Client", FakeClient)
@@ -57,6 +60,11 @@ def test_sync_extended_namespace(monkeypatch: pytest.MonkeyPatch) -> None:
     assert sync_api.history("X:Y", count=2)[1] == {"count": 2}
     assert sync_api.news_markdown("X:Y", limit=1)[1] == {"limit": 1}
     assert sync_api.research("X:Y", "profile")[1] == "profile"
+    assert str(sync_api.options_info("X:Y")) == "X:Y"
+    assert str(sync_api.options_series("X:Y")) == "X:Y"
+    assert sync_api.docs("X:Y")[1] == "documents"
+    monkeypatch.setattr(api, "economic_calendar", lambda **kwargs: kwargs)
+    assert sync_api.calendar(importance=1)["importance"] == 1
     functions = [
         api.bonds,
         api.etfs,
@@ -95,6 +103,11 @@ async def test_async_extended_namespace(monkeypatch: pytest.MonkeyPatch) -> None
     assert str(await async_api.option_series("X:Y")) == "X:Y"
     assert (await async_api.history("X:Y", count=2))[1] == {"count": 2}
     assert (await async_api.news_markdown("X:Y", limit=1))[1] == {"limit": 1}
+    assert str(await async_api.options_info("X:Y")) == "X:Y"
+    assert str(await async_api.options_series("X:Y")) == "X:Y"
+    assert (await async_api.docs("X:Y"))[1] == "documents"
+    stream = async_api.stream_quotes(["X:Y"])
+    assert await anext(stream) == ["X:Y"]
     functions = [
         aio.bonds,
         aio.etfs,
@@ -133,10 +146,13 @@ class TickerClient(FakeClient):
         return symbol
 
     def news(self, symbol: object, **kwargs: Any) -> Any:
-        return symbol, kwargs
+        return (symbol, kwargs) if kwargs else [str(symbol)]
 
     def options_chain(self, symbol: object, **kwargs: Any) -> Any:
         return symbol, kwargs
+
+    def quotes(self, symbols: object) -> Any:
+        return {"quotes": symbols}
 
 
 def test_ticker_extended_methods() -> None:
@@ -144,11 +160,14 @@ def test_ticker_extended_methods() -> None:
     untyped = cast(Any, ticker)
     assert untyped.history(count=1)[1] == {"count": 1}
     assert str(untyped.option_series()) == "X:Y"
+    assert str(untyped.options_info()) == "X:Y"
+    assert str(untyped.options_series()) == "X:Y"
     assert untyped.news_markdown(limit=1)[1]["limit"] == 1
     assert [
         cast(Any, ticker.bonds())[1],
         cast(Any, ticker.etfs())[1],
         cast(Any, ticker.documents())[1],
+        cast(Any, ticker.docs())[1],
         cast(Any, ticker.holdings())[1],
         cast(Any, ticker.ideas())[1],
         cast(Any, ticker.financials())[1],
@@ -159,6 +178,7 @@ def test_ticker_extended_methods() -> None:
         "bonds",
         "etfs",
         "documents",
+        "documents",
         "holdings",
         "ideas",
         "financials",
@@ -166,6 +186,14 @@ def test_ticker_extended_methods() -> None:
         "technicals",
         "profile",
     ]
+    tickers = Tickers(["X:Y", "X:Z"], client=cast(Any, TickerClient()))
+    assert list(cast(Any, tickers.quotes())["quotes"]) == [
+        Symbol("X", "Y"),
+        Symbol("X", "Z"),
+    ]
+    assert set(tickers.history(count=1)) == {"X:Y", "X:Z"}
+    assert cast(Any, tickers.news())["X:Y"] == ["X:Y"]
+    assert cast(Any, tickers.research("profile")["X:Z"])[1] == "profile"
 
 
 class AsyncTickerClient(FakeAsyncClient):
@@ -175,13 +203,22 @@ class AsyncTickerClient(FakeAsyncClient):
         return symbol
 
     async def news(self, symbol: object, **kwargs: Any) -> Any:
-        return symbol, kwargs
+        return (symbol, kwargs) if kwargs else [str(symbol)]
 
     async def options_chain(self, symbol: object, **kwargs: Any) -> Any:
         return symbol, kwargs
 
     async def close(self) -> None:
         self.closed += 1
+
+    async def quotes(self, symbols: object) -> Any:
+        return {"quotes": symbols}
+
+    async def history(self, symbol: object, **kwargs: Any) -> Any:
+        return (symbol, kwargs) if kwargs else [str(symbol)]
+
+    async def research(self, symbol: object, section: str) -> Any:
+        return str(symbol), section
 
 
 @pytest.mark.asyncio
@@ -190,6 +227,7 @@ async def test_async_ticker_extended_methods() -> None:
     ticker = AsyncTicker("X:Y", client=cast(Any, client))
     untyped = cast(Any, ticker)
     assert str(await untyped.quote()) == "X:Y"
+    assert await anext(untyped.stream()) == [Symbol("X", "Y")]
     assert (await untyped.history(count=1))[1]["count"] == 1
     assert (await untyped.news(limit=1))[1]["limit"] == 1
     assert (await untyped.news_markdown(limit=1))[1]["limit"] == 1
@@ -198,6 +236,15 @@ async def test_async_ticker_extended_methods() -> None:
     assert (await untyped.research("profile"))[1] == "profile"
     async with ticker as entered:
         assert entered is ticker
+    assert client.closed == 0
+
+    tickers = AsyncTickers(["X:Y", "X:Z"], client=cast(Any, client))
+    assert "quotes" in await tickers.quotes()
+    assert cast(Any, await tickers.history())["X:Y"] == ["X:Y"]
+    assert cast(Any, await tickers.news())["X:Z"] == ["X:Z"]
+    assert cast(Any, (await tickers.research("profile"))["X:Y"])[1] == "profile"
+    async with tickers as entered:
+        assert entered is tickers
     assert client.closed == 0
 
 

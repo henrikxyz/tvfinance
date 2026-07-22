@@ -13,6 +13,17 @@ theme:
 
 nav:
   - Home: index.md
+  - User guide:
+      - Python API: guide/python.md
+      - CLI: guide/cli.md
+      - MCP: guide/mcp.md
+  - API:
+      - Client: api/client.md
+      - Models: api/models.md
+      - Tickers: api/tickers.md
+  - Project:
+      - Audit: project/audit.md
+      - Improvement roadmap: project/roadmap.md
   - Architecture:
       - Overview: architecture/overview.md
       - Quality gates: architecture/quality-gates.md

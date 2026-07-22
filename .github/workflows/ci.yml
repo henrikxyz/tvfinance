@@ -36,7 +36,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install locked dependencies
-        run: uv sync --frozen --group dev
+        run: uv sync --frozen --extra mcp --group dev
 
       - name: Check lock file
         run: uv lock --check
@@ -55,3 +55,18 @@ jobs:
 
       - name: Build distributions
         run: uv build
+
+      - name: Smoke test wheel
+        shell: bash
+        run: uv run --isolated --no-project --with dist/*.whl python -c "import tvfinance; print(tvfinance.__version__)"
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --group docs
+      - run: uv run --frozen mkdocs build --strict

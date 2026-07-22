@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from tvfinance.api import (
     bonds,
+    calendar,
     corporate_calendar,
     dividends,
+    docs,
     documents,
     earnings,
     economic_calendar,
@@ -20,6 +22,8 @@ from tvfinance.api import (
     news_markdown,
     option_series,
     options_chain,
+    options_info,
+    options_series,
     profile,
     quote,
     quotes,
@@ -43,13 +47,14 @@ from tvfinance.core.models import (
     Symbol,
     SymbolSearchResult,
 )
-from tvfinance.ticker import AsyncTicker, Ticker
+from tvfinance.ticker import AsyncTicker, AsyncTickers, Ticker, Tickers
 
 __version__ = "2.0.0.dev0"
 
 __all__ = [
     "AsyncClient",
     "AsyncTicker",
+    "AsyncTickers",
     "CalendarEvent",
     "Candle",
     "Client",
@@ -63,11 +68,14 @@ __all__ = [
     "Symbol",
     "SymbolSearchResult",
     "Ticker",
+    "Tickers",
     "TvFinanceError",
     "__version__",
     "bonds",
+    "calendar",
     "corporate_calendar",
     "dividends",
+    "docs",
     "documents",
     "earnings",
     "economic_calendar",
@@ -82,6 +90,8 @@ __all__ = [
     "news_markdown",
     "option_series",
     "options_chain",
+    "options_info",
+    "options_series",
     "profile",
     "quote",
     "quotes",

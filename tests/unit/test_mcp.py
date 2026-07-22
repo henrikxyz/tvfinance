@@ -8,9 +8,12 @@ import pytest
 from tvfinance import aio
 from tvfinance.core import (
     CalendarEvent,
+    Candle,
     NewsArticle,
     OptionChainRow,
+    OptionSeries,
     Quote,
+    ResearchData,
     ScreenerRow,
     Symbol,
     SymbolSearchResult,
@@ -19,11 +22,17 @@ from tvfinance.core.exceptions import OptionalDependencyError
 from tvfinance.mcp import (
     TOOLS,
     create_server,
+    get_corporate_calendar,
     get_economic_calendar,
+    get_history,
     get_news,
+    get_news_markdown,
+    get_option_series,
     get_options_chain,
     get_quote,
+    get_quote_updates,
     get_quotes,
+    get_research,
     main,
     query_screener,
     search_symbols,
@@ -100,6 +109,28 @@ async def test_mcp_tools_delegate_to_async_namespace(
     async def fake_calendar(**kwargs: Any) -> list[CalendarEvent]:
         return [CalendarEvent("e", "Event", kwargs["from_date"], "economic")]
 
+    async def fake_series(value: str) -> list[OptionSeries]:
+        return [OptionSeries("AAPL", 20261218)]
+
+    async def fake_history(*args: Any, **kwargs: Any) -> list[Candle]:
+        from datetime import datetime, timezone
+
+        return [Candle(symbol, datetime.now(timezone.utc), 1, 2, 0, 1.5)]
+
+    async def fake_research(value: str, section: str) -> ResearchData:
+        return ResearchData(symbol, section)
+
+    async def fake_corporate(category: str, **kwargs: Any) -> list[CalendarEvent]:
+        from datetime import datetime, timezone
+
+        return [CalendarEvent("e", category, datetime.now(timezone.utc), category)]
+
+    async def fake_markdown(*args: Any, **kwargs: Any) -> str:
+        return "# News"
+
+    async def fake_stream(values: list[str]) -> Any:
+        yield quote
+
     monkeypatch.setattr(aio, "search", fake_search)
     monkeypatch.setattr(aio, "quote", fake_quote)
     monkeypatch.setattr(aio, "quotes", fake_quotes)
@@ -107,6 +138,12 @@ async def test_mcp_tools_delegate_to_async_namespace(
     monkeypatch.setattr(aio, "options_chain", fake_options)
     monkeypatch.setattr(aio, "news", fake_news)
     monkeypatch.setattr(aio, "economic_calendar", fake_calendar)
+    monkeypatch.setattr(aio, "option_series", fake_series)
+    monkeypatch.setattr(aio, "history", fake_history)
+    monkeypatch.setattr(aio, "research", fake_research)
+    monkeypatch.setattr(aio, "corporate_calendar", fake_corporate)
+    monkeypatch.setattr(aio, "news_markdown", fake_markdown)
+    monkeypatch.setattr(aio, "stream_quotes", fake_stream)
 
     assert (await search_symbols("Apple"))[0]["description"] == "Apple"
     assert (await get_quote("NASDAQ:AAPL"))["last"] == 200
@@ -117,3 +154,10 @@ async def test_mcp_tools_delegate_to_async_namespace(
     assert (await get_economic_calendar("2026-07-22", "2026-07-23", ["US"]))[0][
         "title"
     ] == "Event"
+    assert (await get_option_series("NASDAQ:AAPL"))[0]["root"] == "AAPL"
+    assert (await get_history("NASDAQ:AAPL"))[0]["close"] == 1.5
+    assert (await get_research("NASDAQ:AAPL", "profile"))["section"] == "profile"
+    assert (await get_corporate_calendar("earnings"))[0]["category"] == "earnings"
+    assert await get_news_markdown("NASDAQ:AAPL") == "# News"
+    assert (await get_quote_updates(["NASDAQ:AAPL"]))[0]["last"] == 200
+    assert await get_quote_updates(["NASDAQ:AAPL"], updates=0) == []

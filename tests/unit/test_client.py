@@ -14,6 +14,15 @@ from tvfinance.core import (
     HttpResponse,
     RequestTimeoutError,
 )
+from tvfinance.core.models import (
+    CalendarEvent,
+    Candle,
+    NewsArticle,
+    OptionSeries,
+    Quote,
+    ResearchData,
+    Symbol,
+)
 
 
 class FakeTransport:
@@ -115,6 +124,21 @@ def test_sync_client_delegates_all_operations(monkeypatch: pytest.MonkeyPatch) -
         async def economic_calendar(self, **kwargs: Any) -> Any:
             return kwargs
 
+        async def option_series(self, symbol: object) -> Any:
+            return symbol
+
+        async def history(self, symbol: object, **kwargs: Any) -> Any:
+            return symbol, kwargs
+
+        async def news_markdown(self, symbol: object, **kwargs: Any) -> Any:
+            return symbol, kwargs
+
+        async def research(self, symbol: object, section: str) -> Any:
+            return symbol, section
+
+        async def corporate_calendar(self, category: str, **kwargs: Any) -> Any:
+            return category, kwargs
+
     async def fake_client(self: Client) -> Any:
         return FakeAsyncClient()
 
@@ -128,3 +152,58 @@ def test_sync_client_delegates_all_operations(monkeypatch: pytest.MonkeyPatch) -
     assert untyped.options_chain("X:Y", expiration=1, root="Y")[0] == "X:Y"
     assert untyped.news("X:Y", limit=1)[0] == "X:Y"
     assert untyped.economic_calendar(limit=1) == {"limit": 1}
+    assert untyped.option_series("X:Y") == "X:Y"
+    assert untyped.history("X:Y", count=1)[1]["count"] == 1
+    assert untyped.news_markdown("X:Y", limit=1)[1]["limit"] == 1
+    assert untyped.research("X:Y", "profile")[1] == "profile"
+    assert untyped.corporate_calendar("ipo", limit=1)[0] == "ipo"
+
+
+@pytest.mark.asyncio
+async def test_async_client_extended_operations() -> None:
+    symbol = Symbol("X", "Y")
+    moment = datetime.now(timezone.utc)
+
+    class FakeProvider:
+        async def option_series(self, value: object) -> list[OptionSeries]:
+            return [OptionSeries("Y", 20261218)]
+
+        async def options_chain(self, value: object, **kwargs: Any) -> list[Any]:
+            assert kwargs == {"expiration": 20261218, "root": "Y"}
+            return []
+
+        async def history(self, value: object, **kwargs: Any) -> list[Candle]:
+            return [Candle(symbol, moment, 1, 2, 0, 1.5)]
+
+        async def news(self, value: object, **kwargs: Any) -> list[NewsArticle]:
+            return [NewsArticle("1", "Title", moment, body_markdown="Body")]
+
+        async def research(self, value: object, section: str) -> ResearchData:
+            return ResearchData(symbol, section)
+
+        async def corporate_calendar(
+            self, category: str, **kwargs: Any
+        ) -> list[CalendarEvent]:
+            assert kwargs["from_date"].tzinfo is not None
+            return [CalendarEvent("1", category, moment, category)]
+
+        async def economic_calendar(self, **kwargs: Any) -> list[CalendarEvent]:
+            return [
+                CalendarEvent("1", "Low", moment, "economic", importance=0),
+                CalendarEvent("2", "High", moment, "economic", importance=1),
+            ]
+
+        async def stream_quotes(self, values: object) -> Any:
+            yield Quote(symbol, last=1)
+
+    client = AsyncClient(session=AsyncClientSession(transport=FakeTransport([])))
+    client.provider = cast(Any, FakeProvider())
+    assert await client.options_chain("X:Y") == []
+    assert (await client.history("X:Y"))[0].close == 1.5
+    assert (await client.news("X:Y", fetch_body=True))[0].title == "Title"
+    assert (await client.news_markdown("X:Y")).endswith("Body\n")
+    assert (await client.research("X:Y", "profile")).section == "profile"
+    assert (await client.corporate_calendar("ipo"))[0].category == "ipo"
+    events = await client.economic_calendar(importance=1)
+    assert [event.title for event in events] == ["High"]
+    assert (await anext(client.stream_quotes(["X:Y"]))).last == 1

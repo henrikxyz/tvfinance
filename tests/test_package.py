@@ -11,8 +11,4 @@ def test_package_version() -> None:
 
 def test_package_declares_optional_interfaces() -> None:
     package_metadata = metadata("tvfinance")
-    assert set(package_metadata.get_all("Provides-Extra") or []) == {
-        "all",
-        "cli",
-        "mcp",
-    }
+    assert set(package_metadata.get_all("Provides-Extra") or []) == {"mcp"}

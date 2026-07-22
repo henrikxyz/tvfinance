@@ -39,11 +39,20 @@ def decode_frames(buffer: str) -> tuple[list[str], str]:
         except ValueError as exc:
             raise ProtocolError("WebSocket frame length is invalid") from exc
         payload_start = length_end + len(_PREFIX)
-        payload_bytes = buffer[payload_start:].encode("utf-8")
-        if len(payload_bytes) < length:
+        payload_text = buffer[payload_start:]
+        if len(payload_text.encode("utf-8")) < length:
             break
-        payload = payload_bytes[:length].decode("utf-8")
-        consumed = payload_start + len(payload)
+        byte_count = 0
+        character_count = 0
+        for character in payload_text:
+            byte_count += len(character.encode("utf-8"))
+            character_count += 1
+            if byte_count >= length:
+                break
+        if byte_count != length:
+            raise ProtocolError("WebSocket frame splits a UTF-8 character")
+        payload = payload_text[:character_count]
+        consumed = payload_start + character_count
         messages.append(payload)
         buffer = buffer[consumed:]
     return messages, buffer

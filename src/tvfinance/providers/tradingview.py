@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import secrets
 import time
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from typing import cast
 from urllib.parse import urljoin
@@ -184,8 +185,8 @@ class TradingViewProvider:
             ("quote_add_symbols", [session_id, normalized.ticker]),
         ]
         try:
-            for method, params in calls:
-                await socket.send_text(encode_method(method, params))
+            for method, call_params in calls:
+                await socket.send_text(encode_method(method, call_params))
             deadline = time.monotonic() + self.session.settings.timeout
             buffer = ""
             while time.monotonic() < deadline:
@@ -281,6 +282,62 @@ class TradingViewProvider:
                 timestamp=datetime.now(timezone.utc),
             )
         return result
+
+    async def stream_quotes(self, symbols: list[str | Symbol]) -> AsyncIterator[Quote]:
+        """Yield live quote updates until the consumer stops iteration."""
+        normalized = normalize_symbols(symbols)
+        socket = await self.session.open_websocket(
+            WEBSOCKET_URL, headers=self._headers(accept="*/*")
+        )
+        session_id = f"qs_{secrets.token_hex(6)}"
+        fields = ["lp", "ch", "chp", "volume", "bid", "ask", "currency_code", "rtc"]
+        calls: list[tuple[str, list[JsonValue]]] = [
+            ("set_auth_token", ["unauthorized_user_token"]),
+            ("quote_create_session", [session_id]),
+            ("quote_set_fields", [session_id, *fields]),
+            ("quote_add_symbols", [session_id, *[item.ticker for item in normalized]]),
+        ]
+        buffer = ""
+        try:
+            for method, params in calls:
+                await socket.send_text(encode_method(method, params))
+            while True:
+                chunk = await socket.receive_text(timeout=self.session.settings.timeout)
+                if chunk.startswith("~h~"):
+                    await socket.send_text(chunk)
+                    continue
+                buffer += chunk
+                messages, buffer = decode_methods(buffer)
+                for message in messages:
+                    msg_params = message.get("p")
+                    if message.get("m") != "qsd" or not isinstance(msg_params, list):
+                        continue
+                    if len(msg_params) < 2 or not isinstance(msg_params[1], dict):
+                        continue
+                    update = msg_params[1]
+                    values = update.get("v")
+                    raw_symbol = update.get("n")
+                    if not isinstance(values, dict) or not isinstance(raw_symbol, str):
+                        continue
+                    quote_symbol = normalize_symbol(raw_symbol)
+                    timestamp = _float(values.get("rtc"))
+                    yield Quote(
+                        quote_symbol,
+                        last=_float(values.get("lp")),
+                        change=_float(values.get("ch")),
+                        change_percent=_float(values.get("chp")),
+                        volume=_float(values.get("volume")),
+                        bid=_float(values.get("bid")),
+                        ask=_float(values.get("ask")),
+                        currency=_optional_string(values.get("currency_code")),
+                        timestamp=(
+                            datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                            if timestamp is not None
+                            else datetime.now(timezone.utc)
+                        ),
+                    )
+        finally:
+            await socket.close()
 
     async def screener(
         self,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import AsyncIterator
 from typing import Any
 
 from tvfinance.client import AsyncClient, Client
@@ -44,6 +46,12 @@ class Ticker:
     def option_series(self) -> list[OptionSeries]:
         return self.client.option_series(self.symbol)
 
+    def options_info(self) -> list[OptionSeries]:
+        return self.option_series()
+
+    def options_series(self) -> list[OptionSeries]:
+        return self.option_series()
+
     def history(self, **kwargs: Any) -> list[Candle]:
         return self.client.history(self.symbol, **kwargs)
 
@@ -61,6 +69,9 @@ class Ticker:
 
     def documents(self) -> ResearchData:
         return self.research("documents")
+
+    def docs(self) -> ResearchData:
+        return self.documents()
 
     def holdings(self) -> ResearchData:
         return self.research("holdings")
@@ -94,6 +105,10 @@ class AsyncTicker:
     async def quote(self) -> Quote:
         return await self.client.quote(self.symbol)
 
+    async def stream(self) -> AsyncIterator[Quote]:
+        async for quote in self.client.stream_quotes([self.symbol]):
+            yield quote
+
     async def history(self, **kwargs: Any) -> list[Candle]:
         return await self.client.history(self.symbol, **kwargs)
 
@@ -121,6 +136,92 @@ class AsyncTicker:
             await self.client.close()
 
     async def __aenter__(self) -> AsyncTicker:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: object,
+    ) -> None:
+        await self.close()
+
+
+class Tickers:
+    """Efficient synchronous operations over a validated symbol collection."""
+
+    def __init__(
+        self, symbols: list[str | Symbol], *, client: Client | None = None
+    ) -> None:
+        self.symbols = tuple(normalize_symbol(symbol) for symbol in symbols)
+        self.client = client or Client()
+
+    def quotes(self) -> dict[str, Quote | None]:
+        return self.client.quotes(list(self.symbols))
+
+    def history(self, **kwargs: Any) -> dict[str, list[Candle]]:
+        return {
+            symbol.ticker: self.client.history(symbol, **kwargs)
+            for symbol in self.symbols
+        }
+
+    def news(self, **kwargs: Any) -> dict[str, list[NewsArticle]]:
+        return {
+            symbol.ticker: self.client.news(symbol, **kwargs) for symbol in self.symbols
+        }
+
+    def research(self, section: str) -> dict[str, ResearchData]:
+        return {
+            symbol.ticker: self.client.research(symbol, section)
+            for symbol in self.symbols
+        }
+
+
+class AsyncTickers:
+    """Concurrent asynchronous operations sharing one client and session."""
+
+    def __init__(
+        self, symbols: list[str | Symbol], *, client: AsyncClient | None = None
+    ) -> None:
+        self.symbols = tuple(normalize_symbol(symbol) for symbol in symbols)
+        self.client = client or AsyncClient()
+        self._owns_client = client is None
+
+    async def quotes(self) -> dict[str, Quote | None]:
+        return await self.client.quotes(list(self.symbols))
+
+    async def history(self, **kwargs: Any) -> dict[str, list[Candle]]:
+        values = await asyncio.gather(
+            *(self.client.history(symbol, **kwargs) for symbol in self.symbols)
+        )
+        return {
+            symbol.ticker: value
+            for symbol, value in zip(self.symbols, values, strict=True)
+        }
+
+    async def news(self, **kwargs: Any) -> dict[str, list[NewsArticle]]:
+        values = await asyncio.gather(
+            *(self.client.news(symbol, **kwargs) for symbol in self.symbols)
+        )
+        return {
+            symbol.ticker: value
+            for symbol, value in zip(self.symbols, values, strict=True)
+        }
+
+    async def research(self, section: str) -> dict[str, ResearchData]:
+        values = await asyncio.gather(
+            *(self.client.research(symbol, section) for symbol in self.symbols)
+        )
+        return {
+            symbol.ticker: value
+            for symbol, value in zip(self.symbols, values, strict=True)
+        }
+
+    async def close(self) -> None:
+        if self._owns_client:
+            await self.client.close()
+
+    async def __aenter__(self) -> AsyncTickers:
         return self
 
     async def __aexit__(
