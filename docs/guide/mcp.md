@@ -10,7 +10,7 @@ implementation.
     restrictions on non-display use and third-party tools that enable restricted
     uses. Do not use TradingView-derived data through MCP unless you have
     independently established all necessary access and data rights. Read the
-    [provider policy notice](https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md).
+    [provider policy notice](https://github.com/henrikxyz/TVFinance/blob/main/TRADINGVIEW_POLICY.md).
 
 ~~~bash
 pip install "tvfinance[mcp]"

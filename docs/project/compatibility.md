@@ -3,7 +3,7 @@
 Provider interfaces used by the package are publicly reachable but unofficial.
 Public reachability does not grant permission to access, process, store, or
 redistribute provider data. Review the
-[TradingView policy notice](https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md)
+[TradingView policy notice](https://github.com/henrikxyz/TVFinance/blob/main/TRADINGVIEW_POLICY.md)
 before using them. Contract fixtures protect normalized package behavior;
 scheduled live checks detect connectivity and upstream compatibility changes.
 
