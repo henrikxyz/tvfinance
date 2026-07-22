@@ -1,8 +1,11 @@
 # Provider compatibility
 
-All provider endpoints are public but unofficial. Contract fixtures protect the
-normalized package behavior; scheduled live checks detect connectivity and
-upstream compatibility changes.
+Provider interfaces used by the package are publicly reachable but unofficial.
+Public reachability does not grant permission to access, process, store, or
+redistribute provider data. Review the
+[TradingView policy notice](https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md)
+before using them. Contract fixtures protect normalized package behavior;
+scheduled live checks detect connectivity and upstream compatibility changes.
 
 | Capability | Transport | Fixture | Scheduled live check |
 | --- | --- | --- | --- |

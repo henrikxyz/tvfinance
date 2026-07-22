@@ -1,23 +1,46 @@
-# tvfinance
+# TVFinance
 
-tvfinance is a typed, async-first Python toolkit for financial market data
-research. One domain implementation powers synchronous Python, native async
-Python, CLI, and optional MCP interfaces.
+[![PyPI](https://img.shields.io/pypi/v/tvfinance?logo=pypi&logoColor=white)](https://pypi.org/project/tvfinance/)
+[![Python](https://img.shields.io/pypi/pyversions/tvfinance?logo=python&logoColor=white)](https://pypi.org/project/tvfinance/)
+[![CI](https://img.shields.io/github/actions/workflow/status/henrikxyz/tvfinance/ci.yml?branch=main&logo=github&label=CI)](https://github.com/henrikxyz/tvfinance/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/henrikxyz/tvfinance/actions/workflows/ci.yml)
+[![License](https://img.shields.io/pypi/l/tvfinance)](LICENSE)
 
-Python 3.10 through 3.14 are supported.
+> [!CAUTION]
+> **STOP: TradingView legal and data-use restrictions.** TVFinance is an
+> independent, unofficial project. It is not affiliated with,
+> sponsored by, endorsed by, or vetted by TradingView. TradingView's terms
+> describe market data as display-only and restrict non-display, automated,
+> algorithmic, commercial, and redistribution uses, including third-party tools
+> that enable restricted uses. TVFinance does not grant permission or a data
+> license. Before using it, read the [TradingView policy notice](TRADINGVIEW_POLICY.md),
+> the [official TradingView terms](https://www.tradingview.com/policies/), and
+> the full [disclaimer](DISCLAIMER.md).
+
+> [!WARNING]
+> This project was substantially generated with help from large language
+> models. Its code, tests, documentation, and output may contain mistakes and
+> require independent human review. Market data may be delayed, incomplete, or
+> incorrect. Do not use this software as financial or investment advice. Read
+> the [AI disclosure](AI_DISCLOSURE.md) before using or contributing.
+
+TVFinance is a Python library for looking up market information. You can search
+for symbols, check current quotes, download price history, read company news,
+and explore financial data without assembling several different tools.
+
+It works in regular and async Python programs, from the command line, and as an
+optional MCP server for AI applications. Python 3.10 through 3.14 are supported.
 
 ## Features
 
-- Symbol search, quote snapshots, batch quotes, live quote updates, and screeners.
-- Historical OHLCV bars with configurable resolution and adjustment.
-- Option-series discovery and automatically selected option chains.
-- Economic, earnings, revenue, dividend, and IPO calendars.
-- News metadata, optional article bodies, and Markdown output.
-- Company profile, financials, forecasts, technicals, bonds, ETFs, holdings,
-  filings, and community ideas.
-- Ticker, Tickers, AsyncTicker, and AsyncTickers facades.
-- Typed immutable models, strict validation, retry, cache, and structured errors.
-- Optional persistent SQLite TTL/LRU cache with no additional dependency.
+- Find stocks, ETFs, bonds, indexes, futures, currencies, and cryptocurrencies.
+- Check one quote or follow live price updates.
+- Download historical prices at different time intervals.
+- Filter markets with screeners and explore option chains.
+- Read company profiles, financials, forecasts, filings, and news.
+- View earnings, dividend, revenue, IPO, and economic calendars.
+- Use a simple Python API, async API, command-line tool, or optional MCP server.
+- Cache results in memory or in a local SQLite file.
 
 ## Installation
 
@@ -26,7 +49,7 @@ pip install tvfinance
 pip install "tvfinance[mcp]"
 ~~~
 
-No MCP dependency is imported by the base package.
+Install the MCP extra only when you need to connect TVFinance to an MCP client.
 
 ## Quick start
 
@@ -38,7 +61,7 @@ bars = tvfinance.history("NASDAQ:AAPL", resolution="1D", count=30)
 profile = tvfinance.profile("NASDAQ:AAPL")
 ~~~
 
-Native async calls live in tvfinance.aio:
+For async applications, use `tvfinance.aio`:
 
 ~~~python
 from tvfinance import aio
@@ -47,7 +70,7 @@ quote = await aio.quote("NASDAQ:AAPL")
 bars = await aio.history("NASDAQ:AAPL", count=30)
 ~~~
 
-Reuse connections for multiple operations:
+For several requests, reuse one client connection:
 
 ~~~python
 from tvfinance import AsyncClient
@@ -57,7 +80,7 @@ async with AsyncClient() as client:
     news = await client.news("NASDAQ:AAPL", fetch_body=True)
 ~~~
 
-CLI and MCP entry points:
+Command-line and MCP entry points:
 
 ~~~bash
 tvfinance --help
@@ -76,10 +99,23 @@ uv run pytest
 uv build
 ```
 
-## Status
+## Important information
 
-Version 26.0.0 is the first production release of the rebuilt package. Provider
+Version 26.0.1 is the current stable release of the rebuilt package. Provider
 endpoints are unofficial and may change. This project is for research and does
 not provide financial advice.
-The project was substantially created with LLM assistance; read the
-[AI disclosure](AI_DISCLOSURE.md) before use or contribution.
+
+## Legal and provider notice
+
+TradingView and related names and marks belong to their respective owners.
+TVFinance is not affiliated with, endorsed by, or vetted by TradingView. The
+software uses unofficial interfaces and provides no rights to provider content
+or market data.
+
+Do not assume that research, educational, personal, internal, AI, or MCP use is
+automatically permitted. You must determine whether your exact access, display,
+storage, processing, and redistribution are authorized. If you need automated
+trading, algorithmic processing, commercial use, redistribution, or another
+non-display use, obtain explicit permission and a suitable licensed data feed.
+See [TRADINGVIEW_POLICY.md](TRADINGVIEW_POLICY.md) for the provider-policy
+summary and links to the controlling terms.

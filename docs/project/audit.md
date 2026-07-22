@@ -31,4 +31,5 @@
 - Every release is built from the source distribution and smoke-tested before
   publication.
 - Weekly live checks retain JUnit diagnostics without increasing pull-request
-  traffic to public endpoints.
+  traffic to publicly reachable provider interfaces. Public reachability does
+  not establish permission to access or use provider data.

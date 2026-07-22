@@ -20,7 +20,8 @@ uv run mypy src tests
 uv run pytest -q
 ~~~
 
-Public endpoint contract checks are opt-in:
+Live provider contract checks are opt-in. Public reachability does not establish
+permission to access or use provider data:
 
 ~~~powershell
 $env:TVFINANCE_LIVE = "1"

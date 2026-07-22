@@ -1,5 +1,13 @@
 # Changelog
 
+## 26.0.1
+
+- Added prominent TradingView policy and AI-generated-content disclosures.
+- Clarified provider data rights, restricted uses, and MCP-specific risks.
+- Simplified the README and added project status badges.
+- Updated project authorship and copyright information.
+- Updated GitHub Actions to Node.js 24-based action releases.
+
 ## 26.0.0
 
 - Rebuilt the package around typed async-first domain services.

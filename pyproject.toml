@@ -1,11 +1,13 @@
 [project]
 name = "tvfinance"
-version = "26.0.0"
-description = "Typed sync and async tools for financial market data research"
+version = "26.0.1"
+description = "Market data tools for quotes, history, news, screeners, and research"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{ name = "Anonymous Developer" }]
+authors = [
+    { name = "Henrik", email = "295322314+henrikxyz@users.noreply.github.com" },
+]
 keywords = ["finance", "market-data", "tradingview"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -32,6 +34,8 @@ mcp = ["fastmcp>=3.4,<4"]
 Documentation = "https://github.com/henrikxyz/tvfinance#readme"
 Issues = "https://github.com/henrikxyz/tvfinance/issues"
 Source = "https://github.com/henrikxyz/tvfinance"
+"Provider policy" = "https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md"
+"TradingView terms" = "https://www.tradingview.com/policies/"
 
 [project.scripts]
 tvfinance = "tvfinance.cli:main"

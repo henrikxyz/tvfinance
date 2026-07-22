@@ -12,10 +12,14 @@ line, and the optional MCP server.
 - Optional integrations that do not increase the base installation footprint.
 - Clear failures with actionable context and no silently discarded errors.
 
-!!! warning
+!!! danger "Unofficial TradingView integration"
 
-    Provider endpoints are unofficial and can change without notice. The data is
-    for research only and must not be treated as financial advice.
+    Public reachability does not grant permission to access or use provider
+    data. TradingView's terms restrict non-display, automated, algorithmic,
+    commercial, and redistribution uses. Review the
+    [provider policy notice](https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md)
+    and official terms before using this package. The data must not be treated
+    as financial advice.
 
 ## Install
 
