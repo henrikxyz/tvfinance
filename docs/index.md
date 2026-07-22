@@ -1,4 +1,4 @@
-# tvfinance
+# TVFinance
 
 tvfinance provides typed synchronous and asynchronous interfaces for financial
 market data research. The same domain services back Python APIs, the command
@@ -17,7 +17,7 @@ line, and the optional MCP server.
     Public reachability does not grant permission to access or use provider
     data. TradingView's terms restrict non-display, automated, algorithmic,
     commercial, and redistribution uses. Review the
-    [provider policy notice](https://github.com/henrikxyz/tvfinance/blob/main/TRADINGVIEW_POLICY.md)
+    [provider policy notice](https://github.com/henrikxyz/TVFinance/blob/main/TRADINGVIEW_POLICY.md)
     and official terms before using this package. The data must not be treated
     as financial advice.
 

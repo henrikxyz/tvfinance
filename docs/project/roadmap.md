@@ -1,9 +1,9 @@
 # Improvement roadmap
 
 This document records the completed rebuild and its verification status for
-version 26.0.0.
+version 26.0.1.
 
-## 26.0.0 delivery status
+## 26.0.1 delivery status
 
 | Area | Status | Verification |
 | --- | --- | --- |
@@ -13,8 +13,8 @@ version 26.0.0.
 | History and options | Complete | Protocol and parser fixtures |
 | News, calendars, and research | Complete | HTTP and HTML fixtures |
 | CLI and optional MCP | Complete | Command and server registration tests |
-| Packaging and documentation | Complete | Strict docs and wheel smoke test |
-| CI and release workflows | Complete | Local syntax validation |
+| Packaging and documentation | Complete | Strict docs build, wheel smoke test, and published Pages site |
+| CI, documentation, and release workflows | Complete | GitHub Actions and deployment verification |
 | Cross-asset contract fixtures | Complete | Eight asset and locale cases |
 | Persistent cache | Complete | SQLite TTL, LRU, migration tests |
 | Scheduled compatibility checks | Complete | Weekly workflow and JUnit artifact |
@@ -27,7 +27,7 @@ The opt-in search and quote contract was tested successfully on 2026-07-22.
 
 1. Run the complete offline quality gate before every commit.
 2. Run the opt-in live provider test before a release.
-3. Create the signed `v26.0.0` tag after approval.
+3. Create the signed release tag after approval.
 4. Publish through the PyPI trusted publisher workflow.
 
 ## Completion condition

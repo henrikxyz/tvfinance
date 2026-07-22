@@ -3,6 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/tvfinance?logo=pypi&logoColor=white)](https://pypi.org/project/tvfinance/)
 [![Python](https://img.shields.io/pypi/pyversions/tvfinance?logo=python&logoColor=white)](https://pypi.org/project/tvfinance/)
 [![CI](https://img.shields.io/github/actions/workflow/status/henrikxyz/tvfinance/ci.yml?branch=main&logo=github&label=CI)](https://github.com/henrikxyz/tvfinance/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/github/actions/workflow/status/henrikxyz/TVFinance/docs.yml?branch=main&logo=materialformkdocs&logoColor=white&label=docs)](https://henrikxyz.github.io/TVFinance/)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/henrikxyz/tvfinance/actions/workflows/ci.yml)
 [![License](https://img.shields.io/pypi/l/tvfinance)](LICENSE)
 
@@ -30,6 +31,8 @@ and explore financial data without assembling several different tools.
 
 It works in regular and async Python programs, from the command line, and as an
 optional MCP server for AI applications. Python 3.10 through 3.14 are supported.
+The complete [documentation](https://henrikxyz.github.io/TVFinance/) includes
+the Python, CLI, MCP, cache, API, architecture, and development guides.
 
 ## Features
 

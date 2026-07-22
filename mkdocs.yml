@@ -1,8 +1,8 @@
-site_name: tvfinance
-site_description: Typed sync and async financial market data tools
-site_url: https://tvfinance.github.io/tvfinance/
-repo_url: https://github.com/tvfinance/tvfinance
-repo_name: tvfinance/tvfinance
+site_name: TVFinance
+site_description: Market quotes, price history, news, and company information for Python
+site_url: https://henrikxyz.github.io/TVFinance/
+repo_url: https://github.com/henrikxyz/TVFinance
+repo_name: henrikxyz/TVFinance
 
 theme:
   name: material
