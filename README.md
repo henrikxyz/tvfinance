@@ -15,6 +15,7 @@ Python, CLI, and optional MCP interfaces.
   filings, and community ideas.
 - Ticker, Tickers, AsyncTicker, and AsyncTickers facades.
 - Typed immutable models, strict validation, retry, cache, and structured errors.
+- Optional persistent SQLite TTL/LRU cache with no additional dependency.
 
 ## Installation
 

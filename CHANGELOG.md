@@ -9,6 +9,10 @@
   news, and symbol research services.
 - Added strict Ruff, mypy, pytest coverage, documentation, and build gates.
 - Consolidated MCP installation under the tvfinance[mcp] extra.
+- Raised statement and branch coverage enforcement to 100%.
+- Added cross-asset contract fixtures and weekly provider compatibility checks.
+- Added a persistent SQLite TTL/LRU cache backend.
+- Added a machine-readable capability inventory and compatibility procedure.
 
 All notable changes to this project will be documented in this file.
 

@@ -1,6 +1,11 @@
 """Core types shared by all tvfinance interfaces."""
 
-from tvfinance.core.cache import MemoryResponseCache, request_cache_key
+from tvfinance.core.cache import (
+    MemoryResponseCache,
+    ResponseCache,
+    SQLiteResponseCache,
+    request_cache_key,
+)
 from tvfinance.core.contracts import (
     AsyncHttpTransport,
     AsyncWebSocket,
@@ -61,8 +66,10 @@ __all__ = [
     "RateLimitError",
     "RequestTimeoutError",
     "ResearchData",
+    "ResponseCache",
     "RetryPolicy",
     "RetryTransport",
+    "SQLiteResponseCache",
     "ScreenerRow",
     "Symbol",
     "SymbolSearchResult",

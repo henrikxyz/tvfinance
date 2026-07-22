@@ -107,7 +107,7 @@ async def test_async_extended_namespace(monkeypatch: pytest.MonkeyPatch) -> None
     assert str(await async_api.options_series("X:Y")) == "X:Y"
     assert (await async_api.docs("X:Y"))[1] == "documents"
     stream = async_api.stream_quotes(["X:Y"])
-    assert await anext(stream) == ["X:Y"]
+    assert [item async for item in stream] == [["X:Y"]]
     functions = [
         aio.bonds,
         aio.etfs,
@@ -139,6 +139,12 @@ async def test_async_extended_namespace(monkeypatch: pytest.MonkeyPatch) -> None
         "dividends",
         "ipo",
     ]
+
+    async def fake_economic(**kwargs: Any) -> Any:
+        return kwargs
+
+    monkeypatch.setattr(aio, "economic_calendar", fake_economic)
+    assert (await async_api.calendar(importance=1))["importance"] == 1
 
 
 class TickerClient(FakeClient):
@@ -238,14 +244,27 @@ async def test_async_ticker_extended_methods() -> None:
         assert entered is ticker
     assert client.closed == 0
 
-    tickers = AsyncTickers(["X:Y", "X:Z"], client=cast(Any, client))
+
+@pytest.mark.asyncio
+async def test_owned_async_tickers_close(monkeypatch: pytest.MonkeyPatch) -> None:
+    ticker_client = AsyncTickerClient()
+    clients = iter([ticker_client, ticker_client])
+    monkeypatch.setattr("tvfinance.ticker.AsyncClient", lambda: next(clients))
+    ticker = AsyncTicker("X:Y")
+    assert cast(Any, [item async for item in ticker.stream()]) == [[Symbol("X", "Y")]]
+    await ticker.close()
+    tickers = AsyncTickers(["X:Y"])
+    await tickers.close()
+    assert ticker_client.closed == 2
+
+    tickers = AsyncTickers(["X:Y", "X:Z"], client=cast(Any, ticker_client))
     assert "quotes" in await tickers.quotes()
     assert cast(Any, await tickers.history())["X:Y"] == ["X:Y"]
     assert cast(Any, await tickers.news())["X:Z"] == ["X:Z"]
     assert cast(Any, (await tickers.research("profile"))["X:Y"])[1] == "profile"
     async with tickers as entered:
         assert entered is tickers
-    assert client.closed == 0
+    assert ticker_client.closed == 2
 
 
 def test_news_markdown_model() -> None:
@@ -263,3 +282,5 @@ def test_news_markdown_model() -> None:
     assert "Source: Wire" in rendered
     assert "Symbols: X:Y" in rendered
     assert rendered.endswith("Body\n")
+    minimal = NewsArticle("2", "Minimal", datetime(2026, 1, 1, tzinfo=timezone.utc))
+    assert minimal.to_markdown().endswith("+00:00\n")

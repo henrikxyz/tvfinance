@@ -38,3 +38,9 @@ def test_round_trip_unicode_frame() -> None:
     messages, remainder = decode_frames(encode_frame("台灣") + encode_frame("ok"))
     assert messages == ["台灣", "ok"]
     assert remainder == ""
+
+
+def test_empty_and_split_unicode_frames() -> None:
+    assert decode_frames("~m~0~m~") == ([""], "")
+    with pytest.raises(ProtocolError, match="UTF-8"):
+        decode_frames("~m~1~m~台")

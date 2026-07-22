@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -130,6 +130,7 @@ async def test_mcp_tools_delegate_to_async_namespace(
 
     async def fake_stream(values: list[str]) -> Any:
         yield quote
+        yield quote
 
     monkeypatch.setattr(aio, "search", fake_search)
     monkeypatch.setattr(aio, "quote", fake_quote)
@@ -160,4 +161,12 @@ async def test_mcp_tools_delegate_to_async_namespace(
     assert (await get_corporate_calendar("earnings"))[0]["category"] == "earnings"
     assert await get_news_markdown("NASDAQ:AAPL") == "# News"
     assert (await get_quote_updates(["NASDAQ:AAPL"]))[0]["last"] == 200
+    assert len(await get_quote_updates(["NASDAQ:AAPL"], updates=2)) == 2
     assert await get_quote_updates(["NASDAQ:AAPL"], updates=0) == []
+
+    async def empty_stream(values: list[str]) -> Any:
+        for item in cast(list[Quote], []):
+            yield item
+
+    monkeypatch.setattr(aio, "stream_quotes", empty_stream)
+    assert await get_quote_updates(["NASDAQ:AAPL"]) == []

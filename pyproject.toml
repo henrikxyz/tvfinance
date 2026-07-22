@@ -61,7 +61,7 @@ addopts = [
     "--cov=tvfinance",
     "--cov-branch",
     "--cov-report=term-missing",
-    "--cov-fail-under=95",
+    "--cov-fail-under=100",
 ]
 testpaths = ["tests"]
 markers = [
@@ -74,7 +74,7 @@ source = ["tvfinance"]
 omit = ["src/tvfinance/mcp/__main__.py"]
 
 [tool.coverage.report]
-fail_under = 95
+fail_under = 100
 show_missing = true
 skip_covered = true
 

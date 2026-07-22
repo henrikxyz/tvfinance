@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tvfinance.core.cache import MemoryResponseCache
+from tvfinance.core.cache import ResponseCache
 from tvfinance.core.contracts import (
     AsyncHttpTransport,
     AsyncWebSocket,
@@ -21,7 +21,7 @@ class AsyncClientSession:
         *,
         settings: ClientSettings | None = None,
         transport: AsyncHttpTransport | None = None,
-        cache: MemoryResponseCache | None = None,
+        cache: ResponseCache | None = None,
     ) -> None:
         self.settings = settings or ClientSettings()
         if transport is None:

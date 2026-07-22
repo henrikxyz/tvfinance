@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 from tvfinance.core import AsyncClientSession, HttpRequest, HttpResponse
@@ -36,3 +38,13 @@ def test_async_client_session_builds_cached_stack() -> None:
 
     session = AsyncClientSession(cache=MemoryResponseCache())
     assert session.settings.retry.attempts == 3
+
+
+@pytest.mark.asyncio
+async def test_session_opens_websocket(monkeypatch: pytest.MonkeyPatch) -> None:
+    socket = object()
+    opening = AsyncMock(return_value=socket)
+    monkeypatch.setattr("tvfinance.core.websocket.CurlWebSocket.open", opening)
+    session = AsyncClientSession(transport=FakeTransport())
+    assert await session.open_websocket("wss://example", headers={"x": "y"}) is socket
+    opening.assert_awaited_once_with("wss://example", headers={"x": "y"})

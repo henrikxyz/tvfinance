@@ -9,7 +9,12 @@ from tvfinance.core.exceptions import (
     RequestTimeoutError,
     ValidationError,
 )
-from tvfinance.core.history import _candles_from_update, fetch_history, parse_timeframe
+from tvfinance.core.history import (
+    _candles_from_update,
+    _number,
+    fetch_history,
+    parse_timeframe,
+)
 from tvfinance.core.models import Symbol
 from tvfinance.core.types import JsonValue
 from tvfinance.core.websocket import encode_frame
@@ -81,12 +86,22 @@ async def test_fetch_history_protocol_error() -> None:
         await fetch_history(socket, Symbol("X", "Y"))
 
 
+@pytest.mark.asyncio
+async def test_fetch_history_timeout_and_ignored_message() -> None:
+    symbol = Symbol("X", "Y")
+    with pytest.raises(RequestTimeoutError):
+        await fetch_history(FakeSocket([]), symbol, timeout=0)
+    socket = FakeSocket([method("noop", []), method("series_completed", [])])
+    assert await fetch_history(socket, symbol) == []
+
+
 def test_candle_parser_ignores_malformed_rows() -> None:
     symbol = Symbol("X", "Y")
     params: list[JsonValue] = [
         "session",
         {
             "invalid": 1,
+            "invalid_series": {"s": "bad"},
             "rows": {
                 "s": [
                     {},
@@ -99,3 +114,9 @@ def test_candle_parser_ignores_malformed_rows() -> None:
     ]
     assert _candles_from_update(symbol, params) == {}
     assert _candles_from_update(symbol, []) == {}
+
+
+@pytest.mark.parametrize("value", [None, True, [], {}])
+def test_number_rejects_non_numeric_values(value: object) -> None:
+    with pytest.raises(ValueError):
+        _number(value)  # type: ignore[arg-type]

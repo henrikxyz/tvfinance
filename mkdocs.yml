@@ -17,12 +17,14 @@ nav:
       - Python API: guide/python.md
       - CLI: guide/cli.md
       - MCP: guide/mcp.md
+      - Persistent cache: guide/cache.md
   - API:
       - Client: api/client.md
       - Models: api/models.md
       - Tickers: api/tickers.md
   - Project:
       - Audit: project/audit.md
+      - Provider compatibility: project/compatibility.md
       - Improvement roadmap: project/roadmap.md
   - Architecture:
       - Overview: architecture/overview.md

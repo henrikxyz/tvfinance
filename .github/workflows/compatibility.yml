@@ -1,0 +1,41 @@
+name: Provider compatibility
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-compatibility
+  cancel-in-progress: true
+
+jobs:
+  live-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --group dev
+      - name: Run conservative public contract checks
+        id: live
+        continue-on-error: true
+        env:
+          TVFINANCE_LIVE: "1"
+        run: uv run --frozen pytest -m live --no-cov --junitxml=live-results.xml
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-compatibility-${{ github.run_id }}
+          path: live-results.xml
+          if-no-files-found: error
+          retention-days: 14
+      - name: Propagate compatibility failure
+        if: steps.live.outcome != 'success'
+        run: exit 1

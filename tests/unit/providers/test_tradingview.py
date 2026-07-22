@@ -21,6 +21,7 @@ from tvfinance.core import (
 from tvfinance.core.exceptions import ProtocolError
 from tvfinance.core.websocket import encode_frame
 from tvfinance.providers import TradingViewProvider
+from tvfinance.providers.tradingview import _option_series
 
 
 class FakeTransport:
@@ -193,6 +194,10 @@ async def test_provider_history_and_option_series(
     )
     option_socket = FakeSocket(
         [
+            framed("noop", [])
+            + framed("qsd", [])
+            + framed("qsd", ["x", {"v": "bad"}])
+            + framed("qsd", ["x", {"v": {}}]),
             framed(
                 "qsd",
                 [
@@ -208,7 +213,7 @@ async def test_provider_history_and_option_series(
                         }
                     },
                 ],
-            )
+            ),
         ]
     )
     sockets = [history_socket, option_socket]
@@ -234,6 +239,9 @@ async def test_provider_stream_quotes(monkeypatch: pytest.MonkeyPatch) -> None:
     socket = FakeSocket(
         [
             "~h~1",
+            framed("noop", [])
+            + framed("qsd", [])
+            + framed("qsd", ["x", {"n": "NASDAQ:AAPL", "v": "bad"}]),
             framed(
                 "qsd",
                 [
@@ -280,6 +288,7 @@ async def test_provider_option_series_timeout_and_unknown_research(
         return socket
 
     monkeypatch.setattr(api.session, "open_websocket", open_socket)
+    object.__setattr__(api.session.settings, "timeout", 0.0)
     with pytest.raises(TransportError):
         await api.option_series("NASDAQ:AAPL")
     with pytest.raises(ProtocolError):
@@ -303,6 +312,17 @@ async def test_provider_research_and_news_body() -> None:
     articles = await api.news("NASDAQ:AAPL", fetch_body=True)
     assert articles[0].body_markdown == "Article body"
 
+    api, _ = provider(HttpResponse(500, b""))
+    with pytest.raises(TransportError):
+        await api._text("https://example.test")
+    api, _ = provider(HttpResponse(200, b"\xff"))
+    with pytest.raises(ParseError):
+        await api._text("https://example.test")
+
+    api, _ = provider(HttpResponse(200, payload), HttpResponse(500, b""))
+    articles = await api.news("NASDAQ:AAPL", fetch_body=True)
+    assert articles[0].body_markdown is None
+
 
 @pytest.mark.asyncio
 async def test_provider_corporate_calendars() -> None:
@@ -318,3 +338,12 @@ async def test_provider_corporate_calendars() -> None:
     assert len(transport.requests) == 4
     with pytest.raises(ProtocolError):
         await api.corporate_calendar("unknown", from_date=start, to_date=end)
+
+    api, _ = provider(response('{"data":[{"s":"NASDAQ:AAPL","d":[null]}]}'))
+    assert (
+        await api.corporate_calendar("ipo", from_date=start, to_date=end, limit=1) == []
+    )
+
+
+def test_option_series_ignores_rootless_scalars() -> None:
+    assert _option_series(20261218) == []

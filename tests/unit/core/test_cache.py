@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from tvfinance.core import (
@@ -7,6 +11,7 @@ from tvfinance.core import (
     HttpRequest,
     HttpResponse,
     MemoryResponseCache,
+    SQLiteResponseCache,
     ValidationError,
     request_cache_key,
 )
@@ -70,3 +75,57 @@ async def test_cached_transport_only_caches_successful_gets() -> None:
     assert len(inner.requests) == 3
     await transport.close()
     assert inner.closed is True
+
+
+def test_sqlite_cache_persists_expires_and_clears(tmp_path: Path) -> None:
+    now = [10.0]
+    path = tmp_path / "nested" / "cache.sqlite3"
+    response = HttpResponse(200, b"payload", {"content-type": "text/plain"})
+    cache = SQLiteResponseCache(path, ttl=5, max_entries=2, clock=lambda: now[0])
+    assert cache.get("missing") is None
+    cache.set("one", response)
+    assert len(cache) == 1
+
+    reopened = SQLiteResponseCache(path, ttl=5, max_entries=2, clock=lambda: now[0])
+    assert reopened.get("one") == response
+    now[0] = 15.0
+    assert reopened.get("one") is None
+    assert len(reopened) == 0
+    reopened.set("two", response)
+    reopened.clear()
+    assert len(reopened) == 0
+
+
+def test_sqlite_cache_lru_and_schema_migration(tmp_path: Path) -> None:
+    now = [1.0]
+    path = tmp_path / "cache.sqlite3"
+    cache = SQLiteResponseCache(path, ttl=100, max_entries=2, clock=lambda: now[0])
+    response = HttpResponse(200, b"ok")
+    cache.set("one", response)
+    now[0] = 2.0
+    cache.set("two", response)
+    now[0] = 3.0
+    assert cache.get("one") == response
+    now[0] = 4.0
+    cache.set("three", response)
+    assert cache.get("two") is None
+    assert cache.get("one") == response
+    assert cache.get("three") == response
+
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE cache_meta SET value = 999 WHERE key = 'schema_version'"
+        )
+    migrated = SQLiteResponseCache(path)
+    assert len(migrated) == 0
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"ttl": 0}, {"max_entries": 0}],
+)
+def test_sqlite_cache_validates_configuration(
+    tmp_path: Path, kwargs: dict[str, Any]
+) -> None:
+    with pytest.raises(ValidationError):
+        SQLiteResponseCache(tmp_path / "cache.sqlite3", **kwargs)

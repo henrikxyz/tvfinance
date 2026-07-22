@@ -1,8 +1,7 @@
 # Improvement roadmap
 
-This document records what the rebuild delivered and separates it from optional
-future improvements. Items in the final section are not missing requirements
-for version 26.0.0.dev0.
+This document records the completed rebuild and its verification status for
+version 26.0.0.dev0.
 
 ## 26.0.0.dev0 delivery status
 
@@ -16,6 +15,11 @@ for version 26.0.0.dev0.
 | CLI and optional MCP | Complete | Command and server registration tests |
 | Packaging and documentation | Complete | Strict docs and wheel smoke test |
 | CI and release workflows | Complete | Local syntax validation |
+| Cross-asset contract fixtures | Complete | Eight asset and locale cases |
+| Persistent cache | Complete | SQLite TTL, LRU, migration tests |
+| Scheduled compatibility checks | Complete | Weekly workflow and JUnit artifact |
+| Compatibility management | Complete | Capability inventory and change procedure |
+| Coverage hardening | Complete | 100% statements and branches |
 
 The public search and quote contract was tested successfully on 2026-07-22.
 
@@ -27,11 +31,7 @@ The public search and quote contract was tested successfully on 2026-07-22.
 4. Change to 26.0.0rc1 only when a release candidate is requested.
 5. Tag and publish only after explicit approval.
 
-## Optional future improvements
+## Completion condition
 
-- Broaden recorded fixtures across more asset classes and locales.
-- Add a scheduled, conservatively rate-limited live compatibility workflow.
-- Add a persistent cache adapter while preserving the current domain API.
-- Publish compatibility notes when upstream response fields change.
-
-These are hardening opportunities, not unfinished 26.0.0.dev0 functionality.
+The continuation plan is complete. New roadmap items should only be added when
+a new feature request, provider change, or release objective is approved.

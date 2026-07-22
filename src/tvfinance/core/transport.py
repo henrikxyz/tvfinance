@@ -9,7 +9,7 @@ from typing import Any, Protocol, cast
 from curl_cffi import requests
 from curl_cffi.requests.exceptions import RequestException
 
-from tvfinance.core.cache import MemoryResponseCache, request_cache_key
+from tvfinance.core.cache import ResponseCache, request_cache_key
 from tvfinance.core.contracts import AsyncHttpTransport, HttpRequest, HttpResponse
 from tvfinance.core.exceptions import RateLimitError, TransportError
 from tvfinance.core.settings import RetryPolicy
@@ -133,7 +133,7 @@ def _retry_after(value: str | None) -> float | None:
 class CachedTransport:
     """Cache successful GET responses around another transport."""
 
-    def __init__(self, inner: AsyncHttpTransport, cache: MemoryResponseCache) -> None:
+    def __init__(self, inner: AsyncHttpTransport, cache: ResponseCache) -> None:
         self._inner = inner
         self._cache = cache
 

@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator, Callable, Coroutine
 from datetime import datetime, timedelta, timezone
 from typing import Any, TypeVar
 
-from tvfinance.core.cache import MemoryResponseCache
+from tvfinance.core.cache import ResponseCache
 from tvfinance.core.exceptions import ConfigurationError, RequestTimeoutError
 from tvfinance.core.models import (
     CalendarEvent,
@@ -36,7 +36,7 @@ class AsyncClient:
         *,
         settings: ClientSettings | None = None,
         session: AsyncClientSession | None = None,
-        cache: MemoryResponseCache | None = None,
+        cache: ResponseCache | None = None,
     ) -> None:
         self._owns_session = session is None
         self.session = session or AsyncClientSession(settings=settings, cache=cache)
@@ -207,7 +207,7 @@ class Client:
         self,
         *,
         settings: ClientSettings | None = None,
-        cache: MemoryResponseCache | None = None,
+        cache: ResponseCache | None = None,
     ) -> None:
         self.settings = settings
         self.cache = cache

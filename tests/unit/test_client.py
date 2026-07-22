@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import pytest
 
-from tvfinance.client import AsyncClient, Client, run_sync
+from tvfinance.client import AsyncClient, Client, _date_range, run_sync
 from tvfinance.core import (
     AsyncClientSession,
     ConfigurationError,
@@ -206,4 +206,24 @@ async def test_async_client_extended_operations() -> None:
     assert (await client.corporate_calendar("ipo"))[0].category == "ipo"
     events = await client.economic_calendar(importance=1)
     assert [event.title for event in events] == ["High"]
-    assert (await anext(client.stream_quotes(["X:Y"]))).last == 1
+    assert [item.last async for item in client.stream_quotes(["X:Y"])] == [1]
+
+    class EmptyOptions(FakeProvider):
+        async def option_series(self, value: object) -> list[OptionSeries]:
+            return []
+
+    client.provider = cast(Any, EmptyOptions())
+    assert await client.options_chain("X:Y") == []
+
+
+@pytest.mark.asyncio
+async def test_sync_client_creates_real_async_client() -> None:
+    client = await Client()._client()
+    assert isinstance(client, AsyncClient)
+    await client.close()
+
+
+def test_date_range_normalizes_naive_datetimes() -> None:
+    start, end = _date_range(datetime(2026, 1, 1), datetime(2026, 1, 2))
+    assert start.tzinfo is timezone.utc
+    assert end.tzinfo is timezone.utc

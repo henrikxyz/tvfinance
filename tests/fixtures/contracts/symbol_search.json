@@ -1,0 +1,58 @@
+[
+  {
+    "case": "us_stock_en",
+    "locale": ["en", "US"],
+    "query": "Apple",
+    "payload": [{"exchange": "NASDAQ", "symbol": "AAPL", "description": "Apple Inc.", "type": "stock", "currency_code": "USD"}],
+    "expected": "NASDAQ:AAPL"
+  },
+  {
+    "case": "us_etf_zh",
+    "locale": ["zh", "TW"],
+    "query": "標普 ETF",
+    "payload": [{"exchange": "AMEX", "symbol": "SPY", "description": "SPDR S&P 500 ETF Trust", "type": "fund", "currency_code": "USD"}],
+    "expected": "AMEX:SPY"
+  },
+  {
+    "case": "government_bond",
+    "locale": ["en", "GB"],
+    "query": "US 10Y",
+    "payload": [{"exchange": "TVC", "symbol": "US10Y", "description": "United States 10 Year Government Bonds Yield", "type": "bond", "currency_code": "USD"}],
+    "expected": "TVC:US10Y"
+  },
+  {
+    "case": "index",
+    "locale": ["ja", "JP"],
+    "query": "Nikkei",
+    "payload": [{"exchange": "TVC", "symbol": "NI225", "description": "Nikkei 225", "type": "index", "currency_code": "JPY"}],
+    "expected": "TVC:NI225"
+  },
+  {
+    "case": "futures",
+    "locale": ["en", "US"],
+    "query": "ES futures",
+    "payload": [{"exchange": "CME_MINI", "symbol": "ES1!", "description": "E-mini S&P 500 Futures", "type": "futures", "currency_code": "USD"}],
+    "expected": "CME_MINI:ES1!"
+  },
+  {
+    "case": "forex",
+    "locale": ["de", "DE"],
+    "query": "EUR USD",
+    "payload": [{"exchange": "FX", "symbol": "EURUSD", "description": "Euro / U.S. Dollar", "type": "forex", "currency_code": "USD"}],
+    "expected": "FX:EURUSD"
+  },
+  {
+    "case": "crypto",
+    "locale": ["en", "US"],
+    "query": "Bitcoin",
+    "payload": [{"exchange": "COINBASE", "symbol": "BTCUSD", "description": "Bitcoin / U.S. Dollar", "type": "crypto", "currency_code": "USD"}],
+    "expected": "COINBASE:BTCUSD"
+  },
+  {
+    "case": "economic_series",
+    "locale": ["en", "US"],
+    "query": "GDP",
+    "payload": [{"exchange": "FRED", "symbol": "GDP", "description": "Gross Domestic Product", "type": "economic", "currency_code": "USD"}],
+    "expected": "FRED:GDP"
+  }
+]

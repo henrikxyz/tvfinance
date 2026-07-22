@@ -20,7 +20,8 @@
 - Upstream endpoints and HTML structure are unofficial and may change.
 - Public pages can vary by locale, asset class, region, or permission.
 - Anonymous access can be rate-limited and does not expose private account data.
-- In-memory cache state is process-local by design.
+- The default in-memory cache is process-local by design; a persistent SQLite
+  adapter is available for shared durable state.
 
 ## Mitigations
 
@@ -29,3 +30,5 @@
 - Live endpoint checks remain opt-in; CI uses deterministic offline fixtures.
 - Every release is built from the source distribution and smoke-tested before
   publication.
+- Weekly live checks retain JUnit diagnostics without increasing pull-request
+  traffic to public endpoints.
