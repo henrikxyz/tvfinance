@@ -7,6 +7,7 @@ import json
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import cast
 
 from tvfinance.core.contracts import HttpRequest, HttpResponse
 from tvfinance.core.types import JsonValue
@@ -19,7 +20,7 @@ def request_cache_key(request: HttpRequest) -> str:
         "method": request.method.upper(),
         "url": request.url,
         "headers": {key.lower(): value for key, value in request.headers.items()},
-        "params": dict(request.params),
+        "params": cast(JsonValue, request.params),
         "json": request.json_body,
     }
     payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))

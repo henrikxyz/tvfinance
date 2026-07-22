@@ -25,6 +25,7 @@ from tvfinance.core.models import (
     OptionChainRow,
     OptionContract,
     Quote,
+    ScreenerRow,
     Symbol,
     SymbolSearchResult,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "RequestTimeoutError",
     "RetryPolicy",
     "RetryTransport",
+    "ScreenerRow",
     "Symbol",
     "SymbolSearchResult",
     "TransportError",

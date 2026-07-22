@@ -54,6 +54,14 @@ class SymbolSearchResult(SerializableModel):
 
 
 @dataclass(frozen=True, slots=True)
+class ScreenerRow(SerializableModel):
+    """One typed symbol row returned by a market screener."""
+
+    symbol: Symbol
+    values: dict[str, JsonValue] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
 class Quote(SerializableModel):
     """Current quote snapshot."""
 
