@@ -13,11 +13,13 @@ theme:
 
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
   - User guide:
       - Python API: guide/python.md
       - CLI: guide/cli.md
       - MCP: guide/mcp.md
-      - Persistent cache: guide/cache.md
+      - Caching: guide/cache.md
+      - Troubleshooting: guide/troubleshooting.md
   - API:
       - Client: api/client.md
       - Models: api/models.md
