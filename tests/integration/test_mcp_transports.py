@@ -1,0 +1,85 @@
+from __future__ import annotations
+
+import asyncio
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.mark.asyncio
+async def test_stdio_transport_process_handshake() -> None:
+    from fastmcp import Client
+    from fastmcp.client.transports import StdioTransport
+
+    transport = StdioTransport(
+        command=sys.executable,
+        args=["-m", "tvfinance.mcp", "--no-banner"],
+        cwd=str(ROOT),
+    )
+    async with Client(transport) as client:
+        tools = await client.list_tools()
+        result = await client.call_tool(
+            "get_quote_updates", {"symbols": ["NASDAQ:AAPL"], "updates": 0}
+        )
+
+    assert len(tools) == 16
+    assert result.data == []
+
+
+@pytest.mark.asyncio
+async def test_streamable_http_transport_process_handshake() -> None:
+    from fastmcp import Client
+
+    with socket.socket() as reservation:
+        reservation.bind(("127.0.0.1", 0))
+        port = reservation.getsockname()[1]
+
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "tvfinance.mcp",
+            "--transport",
+            "streamable-http",
+            "--port",
+            str(port),
+            "--no-banner",
+        ],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    url = f"http://127.0.0.1:{port}/mcp"
+    last_error: BaseException | None = None
+    try:
+        for _ in range(50):
+            if process.poll() is not None:
+                pytest.fail(f"MCP HTTP server exited with code {process.returncode}")
+            try:
+                async with Client(url) as client:
+                    tools = await client.list_tools()
+                    result = await client.call_tool(
+                        "get_quote_updates",
+                        {"symbols": ["NASDAQ:AAPL"], "updates": 0},
+                    )
+                break
+            except Exception as exc:
+                last_error = exc
+                await asyncio.sleep(0.1)
+        else:
+            pytest.fail(f"MCP HTTP server did not become ready: {last_error}")
+
+        assert len(tools) == 16
+        assert result.data == []
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)

@@ -1,7 +1,11 @@
 # MCP server
 
-MCP is optional and uses the shared async API rather than a separate
-implementation.
+TVFinance can expose its public market-data operations to an MCP-compatible AI
+client. The MCP extra is optional:
+
+~~~bash
+python -m pip install "tvfinance[mcp]"
+~~~
 
 !!! danger "Provider data rights"
 
@@ -12,8 +16,13 @@ implementation.
     independently established all necessary access and data rights. Read the
     [provider policy notice](https://github.com/henrikxyz/TVFinance/blob/main/TRADINGVIEW_POLICY.md).
 
+## Choose a transport
+
+### Standard input and output
+
+Use stdio when one desktop AI client launches one local TVFinance process:
+
 ~~~bash
-pip install "tvfinance[mcp]"
 tvfinance-mcp
 ~~~
 
@@ -23,65 +32,146 @@ The module entry point is equivalent:
 python -m tvfinance.mcp
 ~~~
 
-## Configure an MCP client
+Example MCP client configuration:
 
-Configure the client to launch the installed executable over its standard MCP
-transport. The exact settings screen differs between clients, but the command
-and arguments are equivalent to:
-
-```json
+~~~json
 {
-  "command": "tvfinance-mcp",
-  "args": []
+  "mcpServers": {
+    "tvfinance": {
+      "command": "tvfinance-mcp",
+      "args": ["--no-banner"]
+    }
+  }
 }
-```
+~~~
 
-If the executable is not on the client's `PATH`, use the absolute path inside
-the virtual environment. For example, it is commonly
-`.venv\\Scripts\\tvfinance-mcp.exe` on Windows and
-`.venv/bin/tvfinance-mcp` on macOS or Linux.
+If the command is not on `PATH`, use its absolute path. A Windows JSON path must
+escape each backslash, for example
+`C:\\path\\to\\.venv\\Scripts\\tvfinance-mcp.exe`. On macOS and Linux, a
+typical path is `/path/to/.venv/bin/tvfinance-mcp`.
 
-Restart or reload the MCP client after changing its server configuration. A
-successful connection exposes a server named `tvfinance`.
+### Streamable HTTP
+
+Use Streamable HTTP when a separately managed local server should accept MCP
+connections:
+
+~~~bash
+tvfinance-mcp --transport streamable-http
+~~~
+
+The default endpoint is `http://127.0.0.1:8000/mcp`. An MCP client that supports
+remote URLs can connect to that URL directly.
+
+To select another local port or endpoint path:
+
+~~~bash
+tvfinance-mcp --transport streamable-http --port 8765 --path /tvfinance
+~~~
+
+The default loopback binding prevents other machines from connecting. Binding
+to a non-loopback address requires the explicit `--allow-network` flag:
+
+~~~bash
+tvfinance-mcp --transport streamable-http --host 0.0.0.0 --allow-network
+~~~
+
+TVFinance does not add authentication or TLS. Do not expose this server directly
+to an untrusted network. Put it behind an authenticated TLS reverse proxy and
+confirm that your provider rights permit the intended processing before allowing
+remote access.
+
+## What an AI client receives
+
+During the MCP handshake, the client receives:
+
+- server instructions covering symbol format, date format, bounded requests,
+  the 30-item news limit, provider rights, and financial-risk warnings;
+- a title and full description for every tool;
+- typed input schemas, including allowed enum values and defaults;
+- read-only, non-destructive, idempotent tool annotations.
+
+The website is supporting documentation; an AI client does not need to scrape
+this page to discover how the tools work. It learns the operational contract
+from the MCP handshake itself.
 
 ## Available tools
 
+The MCP surface covers every high-level operation on `tvfinance.AsyncClient`.
+It also provides bounded or batch-oriented helpers that are safer for an AI
+client. Python-only lifecycle objects, raw transports, and provider internals are
+intentionally not MCP tools.
+
 | Tool | Important inputs | Result |
 | --- | --- | --- |
-| `search_symbols` | `query` | Matching symbols |
-| `get_quote` | `symbol` | One quote snapshot |
-| `get_quotes` | `symbols` | Several quote snapshots |
-| `get_quote_updates` | `symbols`, `updates` | A bounded sample of live updates |
-| `query_screener` | `market`, `limit` | Screener rows |
-| `get_history` | `symbol`, `resolution`, `count` | OHLCV bars |
-| `get_option_series` | `symbol` | Option roots and expirations |
-| `get_options_chain` | `symbol`, optional `root` and `expiration` | Paired call/put rows |
-| `get_news` | `symbol`, `limit` | News metadata |
-| `get_news_markdown` | `symbol`, `limit` | Article Markdown |
-| `get_research` | `symbol`, `section` | One research section |
-| `get_corporate_calendar` | category, date range, limit | Corporate events |
-| `get_economic_calendar` | date range, countries | Economic events |
+| `search_symbols` | `query` | Matching symbols and provider identifiers |
+| `get_quote` | `symbol` | One current quote snapshot |
+| `get_quotes` | `symbols` | Quote snapshots keyed by symbol |
+| `get_quote_updates` | `symbols`, `updates` | A bounded sample of live quote updates |
+| `query_screener` | `market`, `columns`, `limit`, `sort_by`, `sort_order` | Ordered screener rows |
+| `get_history` | `symbol`, `resolution`, `count`, `adjustment` | OHLCV bars for one symbol |
+| `get_histories` | `symbols`, `resolution`, `count`, `adjustment` | OHLCV bars keyed by symbol |
+| `get_option_series` | `symbol` | Available option roots and expirations |
+| `get_options_chain` | `symbol`, `root`, `expiration` | Paired call and put rows |
+| `get_research` | `symbol`, `section` | One normalized research section |
+| `get_research_for_symbols` | `symbols`, `section` | One research section keyed by symbol |
+| `get_corporate_calendar` | `category`, date range, `limit` | Earnings, revenue, dividend, or IPO events |
+| `get_economic_calendar` | date range, `countries`, `importance` | Filtered economic events |
+| `get_news` | `symbol`, `limit`, `language`, `fetch_body` | Latest news metadata and optional bodies |
+| `get_news_for_symbols` | `symbols`, `limit`, `language`, `fetch_body` | Latest news keyed by symbol |
+| `get_news_markdown` | `symbol`, `limit`, `language` | Latest articles rendered as Markdown |
 
-Symbols use `EXCHANGE:NAME`. Date inputs use ISO 8601 strings. Option
-expirations use provider Unix timestamps.
+Symbols use `EXCHANGE:NAME`, such as `NASDAQ:AAPL`. Date inputs use ISO 8601.
+Option expirations use provider Unix timestamps returned by
+`get_option_series`. Research sections are `profile`, `financials`, `forecast`,
+`technicals`, `holdings`, `ideas`, `documents`, `bonds`, and `etfs`.
 
-## Safer prompting and tool use
+News is a latest-item snapshot, not an archive. The provider returns at most 30
+items per symbol and does not expose historical pagination through this feed, so
+MCP rejects limits outside `1..30` rather than silently pretending more results
+are available.
 
-Do not instruct an AI client to perform unbounded polling or bulk collection.
-Set small `limit`, `count`, and `updates` values, request only the instruments
-needed for the current task, and review tool output before relying on it. MCP
-does not turn provider data into verified facts or investment advice.
+## Runtime settings
 
-## Verify or troubleshoot startup
+The command exposes the most useful client and cache settings:
 
-```bash
+~~~text
+--timeout SECONDS
+--language CODE
+--region CODE
+--retry-attempts NUMBER
+--retry-base-delay SECONDS
+--retry-maximum-delay SECONDS
+--memory-cache
+--cache-path FILE
+--cache-ttl SECONDS
+--cache-max-entries NUMBER
+--no-banner
+~~~
+
+`--memory-cache` and `--cache-path` are mutually exclusive. Both stdio and HTTP
+reuse one configured asynchronous client for the server lifetime and close it
+cleanly on shutdown.
+
+## Verify a connection
+
+First verify that the optional dependency and server can be loaded:
+
+~~~bash
 python -c "from tvfinance.mcp import create_server; print(create_server().name)"
-```
+~~~
 
-If Python reports that optional dependencies are missing, the base package was
-installed without its extra. Install `tvfinance[mcp]` into the exact Python
-environment used by the MCP client. If a client cannot find the executable,
-use its absolute path rather than installing a second global copy.
+Then connect with the MCP client and confirm that it lists 16 tools. A useful
+network-free call is `get_quote_updates` with `updates` set to `0`; it validates
+the MCP request and response path without contacting the data provider.
 
-Importing `tvfinance` alone does not import FastMCP. The optional dependency is
-loaded only when the MCP server is created.
+If Python reports missing optional dependencies, install `tvfinance[mcp]` into
+the exact Python environment used by the MCP client. If a desktop client cannot
+find `tvfinance-mcp`, configure the executable's absolute path and restart that
+client.
+
+## Safe use
+
+Keep `limit`, `count`, and `updates` bounded, request only instruments needed for
+the current task, and review results before relying on them. Tool results may be
+delayed, incomplete, or incorrect. MCP does not turn provider data into verified
+facts, permission for automated use, or investment advice.
