@@ -4,6 +4,8 @@ tvfinance is a typed, async-first Python toolkit for financial market data
 research. One domain implementation powers synchronous Python, native async
 Python, CLI, and optional MCP interfaces.
 
+Python 3.10 through 3.14 are supported.
+
 ## Features
 
 - Symbol search, quote snapshots, batch quotes, live quote updates, and screeners.
@@ -78,3 +80,5 @@ uv build
 
 The 2.0 line is an alpha release. Provider endpoints are unofficial and may
 change. This project is for research and does not provide financial advice.
+The project was substantially created with LLM assistance; read the
+[AI disclosure](AI_DISCLOSURE.md) before use or contribution.

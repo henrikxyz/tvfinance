@@ -13,6 +13,8 @@
 - Added cross-asset contract fixtures and weekly provider compatibility checks.
 - Added a persistent SQLite TTL/LRU cache backend.
 - Added a machine-readable capability inventory and compatibility procedure.
+- Added declared and CI-tested support for Python 3.14.
+- Added an AI disclosure covering LLM authorship and required user review.
 
 All notable changes to this project will be documented in this file.
 

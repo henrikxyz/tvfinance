@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -99,3 +100,18 @@ indent-style = "space"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tvfinance"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/.github",
+    "/*.md",
+    "/.gitattributes",
+    "/.gitignore",
+    "/.python-version",
+    "/mkdocs.yml",
+    "/pyproject.toml",
+    "/uv.lock",
+]

@@ -7,6 +7,7 @@ import json
 import sqlite3
 import time
 from collections.abc import Callable
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, cast
@@ -111,7 +112,7 @@ class SQLiteResponseCache:
         return connection
 
     def _initialize(self) -> None:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             connection.execute("PRAGMA journal_mode = WAL")
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS cache_meta "
@@ -137,7 +138,7 @@ class SQLiteResponseCache:
 
     def get(self, key: str) -> HttpResponse | None:
         now = self._clock()
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             row = connection.execute(
                 "SELECT status_code, body, headers, expires_at "
                 "FROM response_cache WHERE key = ?",
@@ -162,7 +163,7 @@ class SQLiteResponseCache:
     def set(self, key: str, response: HttpResponse) -> None:
         now = self._clock()
         headers = json.dumps(response.headers, sort_keys=True, separators=(",", ":"))
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             connection.execute(
                 "INSERT OR REPLACE INTO response_cache "
                 "(key, status_code, body, headers, expires_at, accessed_at) "
@@ -196,11 +197,11 @@ class SQLiteResponseCache:
                 )
 
     def clear(self) -> None:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             connection.execute("DELETE FROM response_cache")
 
     def __len__(self) -> int:
-        with self._connect() as connection:
+        with closing(self._connect()) as connection, connection:
             return int(
                 connection.execute("SELECT COUNT(*) FROM response_cache").fetchone()[0]
             )

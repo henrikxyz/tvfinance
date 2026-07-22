@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -112,7 +113,7 @@ def test_sqlite_cache_lru_and_schema_migration(tmp_path: Path) -> None:
     assert cache.get("one") == response
     assert cache.get("three") == response
 
-    with sqlite3.connect(path) as connection:
+    with closing(sqlite3.connect(path)) as connection, connection:
         connection.execute(
             "UPDATE cache_meta SET value = 999 WHERE key = 'schema_version'"
         )
