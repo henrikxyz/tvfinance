@@ -64,6 +64,9 @@ addopts = [
     "--cov-fail-under=95",
 ]
 testpaths = ["tests"]
+markers = [
+    "live: opt-in checks against public provider endpoints",
+]
 
 [tool.coverage.run]
 branch = true
