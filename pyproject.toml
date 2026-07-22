@@ -43,13 +43,39 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.15,<2",
     "pytest>=8.0",
+    "pytest-cov>=6,<8",
     "ruff>=0.15",
 ]
 
 [tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers"
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--cov=tvfinance",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-fail-under=100",
+]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["tvfinance"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src", "tests"]
+pretty = true
+show_error_codes = true
+warn_unreachable = true
 
 [tool.ruff]
 target-version = "py310"
