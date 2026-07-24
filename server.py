@@ -1,4 +1,4 @@
-"""Prefect Horizon entrypoint for the TVFinance MCP server."""
+"""Repository-level entrypoint for the TVFinance MCP server."""
 
 from tvfinance.mcp import create_server
 

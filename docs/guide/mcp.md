@@ -90,6 +90,7 @@ server directly from the GitHub repository. Create a Horizon server with:
 | Repository | `henrikxyz/TVFinance` |
 | Branch | `main` |
 | Entrypoint | `server.py:mcp` |
+| Requirements | `requirements-mcp.txt` |
 
 Enable Horizon authentication before sharing the generated
 `https://<server>.fastmcp.app/mcp` endpoint. Horizon supplies managed HTTPS,
@@ -97,7 +98,11 @@ OAuth, deployment monitoring, and redeployment after pushes to `main`.
 
 The repository-level `server.py` is intentionally a small deployment adapter.
 It creates the same server as `tvfinance.mcp.create_server()`; the hosted and
-local transports therefore expose the same tools and instructions.
+local transports therefore expose the same tools and instructions. The
+deployment requirements file is compiled from the `mcp` optional dependency
+with `uv pip compile`. It preserves FastMCP as an optional dependency for
+ordinary package users while declaring the complete, pinned dependency set to
+the hosted environment.
 
 !!! danger "Authentication is not provider permission"
 

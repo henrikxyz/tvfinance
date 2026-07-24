@@ -10,3 +10,19 @@ Create focused changes that leave the repository working at every commit.
 
 Do not commit generated distributions, local databases, virtual environments,
 credentials, captured private data, or editor configuration.
+
+## Compiled requirements
+
+`pyproject.toml` is the dependency source of truth. Regenerate the install lists
+after changing dependencies:
+
+```bash
+uv pip compile pyproject.toml --universal -o requirements.txt
+uv pip compile pyproject.toml --extra mcp --universal -o requirements-mcp.txt
+uv pip compile pyproject.toml --group dev --universal -o requirements-dev.txt
+uv pip compile pyproject.toml --group docs --universal -o requirements-docs.txt
+```
+
+Commit all affected requirement files together with the source dependency
+change. `requirements-mcp.txt` is also the requirements file used for hosted
+MCP deployments.

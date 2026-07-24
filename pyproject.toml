@@ -116,5 +116,10 @@ include = [
     "/.gitignore",
     "/mkdocs.yml",
     "/pyproject.toml",
+    "/requirements-dev.txt",
+    "/requirements-docs.txt",
+    "/requirements-mcp.txt",
+    "/requirements.txt",
+    "/server.py",
     "/uv.lock",
 ]
