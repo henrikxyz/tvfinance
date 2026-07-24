@@ -145,8 +145,15 @@ intentionally not MCP tools.
 | `get_histories` | `symbols`, `resolution`, `count`, `adjustment` | OHLCV bars keyed by symbol |
 | `get_option_series` | `symbol` | Available option roots and expirations |
 | `get_options_chain` | `symbol`, `root`, `expiration` | Paired call and put rows |
-| `get_research` | `symbol`, `section` | One normalized research section |
-| `get_research_for_symbols` | `symbols`, `section` | One research section keyed by symbol |
+| `get_profile` | `symbol` | Company or asset profile |
+| `get_financials` | `symbol` | Financial statements and summaries |
+| `get_forecast` | `symbol` | Analyst forecasts |
+| `get_technicals` | `symbol` | Technical-analysis summaries |
+| `get_holdings` | `symbol` | Fund or asset holdings |
+| `get_ideas` | `symbol` | Published TradingView ideas |
+| `get_documents` | `symbol` | Financial filings and documents |
+| `get_bonds` | `symbol` | Related bonds |
+| `get_etfs` | `symbol` | Related exchange-traded funds |
 | `get_corporate_calendar` | `category`, date range, `limit` | Earnings, revenue, dividend, or IPO events |
 | `get_economic_calendar` | date range, `countries`, `importance` | Filtered economic events |
 | `get_news` | `symbol`, `limit`, `language`, `fetch_body` | Latest news metadata and optional bodies |
@@ -155,8 +162,8 @@ intentionally not MCP tools.
 
 Symbols use `EXCHANGE:NAME`, such as `NASDAQ:AAPL`. Date inputs use ISO 8601.
 Option expirations use provider Unix timestamps returned by
-`get_option_series`. Research sections are `profile`, `financials`, `forecast`,
-`technicals`, `holdings`, `ideas`, `documents`, `bonds`, and `etfs`.
+`get_option_series`. Each research feature has its own named tool so MCP clients
+can discover it without knowing a hidden section value.
 
 News is a latest-item snapshot, not an archive. The provider returns at most 30
 items per symbol and does not expose historical pagination through this feed, so

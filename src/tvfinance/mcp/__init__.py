@@ -43,7 +43,9 @@ are not financial advice. TradingView access does not grant rights to automate,
 process, store, or redistribute provider data; the operator must establish all
 required permissions. Prefer small bounded requests. News is a latest-news
 snapshot limited to 30 items, not a historical archive. Never use these tools to
-place trades or make autonomous financial decisions.
+place trades or make autonomous financial decisions. Research capabilities are
+exposed as directly named tools such as get_profile, get_financials, and
+get_ideas; select the tool matching the requested result.
 """.strip()
 
 READ_ONLY_ANNOTATIONS = {
@@ -232,43 +234,111 @@ class McpService:
             for symbol, value in zip(normalized, values, strict=True)
         }
 
-    async def get_research(
+    async def _get_research(
         self, symbol: str, section: ResearchSection
     ) -> dict[str, Any]:
-        """Get one normalized research section for a symbol.
-
-        Args:
-            symbol: Symbol in ``EXCHANGE:NAME`` form.
-            section: One of profile, financials, forecast, technicals, holdings,
-                ideas, documents, bonds, or etfs.
-
-        Returns:
-            Symbol, section, normalized records, and summary values.
-        """
         return cast(
             dict[str, Any], (await self.client.research(symbol, section)).to_dict()
         )
 
-    async def get_research_for_symbols(
-        self, symbols: list[str], section: ResearchSection
-    ) -> dict[str, dict[str, Any]]:
-        """Get the same research section concurrently for several symbols.
+    async def get_profile(self, symbol: str) -> dict[str, Any]:
+        """Get the company or asset profile for a symbol.
 
         Args:
-            symbols: Non-empty list of ``EXCHANGE:NAME`` symbols.
-            section: Supported research section shared by every request.
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
 
         Returns:
-            Mapping from symbol to normalized research data.
+            Profile records and summary values for the symbol.
         """
-        normalized = normalize_symbols(symbols)
-        values = await asyncio.gather(
-            *(self.client.research(symbol, section) for symbol in normalized)
-        )
-        return {
-            symbol.ticker: cast(dict[str, Any], value.to_dict())
-            for symbol, value in zip(normalized, values, strict=True)
-        }
+        return await self._get_research(symbol, "profile")
+
+    async def get_financials(self, symbol: str) -> dict[str, Any]:
+        """Get financial statements and summary values for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Financial records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "financials")
+
+    async def get_forecast(self, symbol: str) -> dict[str, Any]:
+        """Get analyst forecasts for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Forecast records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "forecast")
+
+    async def get_technicals(self, symbol: str) -> dict[str, Any]:
+        """Get technical-analysis summaries for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Technical-analysis records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "technicals")
+
+    async def get_holdings(self, symbol: str) -> dict[str, Any]:
+        """Get fund or asset holdings for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Holding records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "holdings")
+
+    async def get_ideas(self, symbol: str) -> dict[str, Any]:
+        """Get published TradingView ideas for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Published idea records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "ideas")
+
+    async def get_documents(self, symbol: str) -> dict[str, Any]:
+        """Get available financial filings and documents for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Filing and document records for the symbol.
+        """
+        return await self._get_research(symbol, "documents")
+
+    async def get_bonds(self, symbol: str) -> dict[str, Any]:
+        """Get related bond information for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            Bond records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "bonds")
+
+    async def get_etfs(self, symbol: str) -> dict[str, Any]:
+        """Get related exchange-traded fund information for a symbol.
+
+        Args:
+            symbol: Symbol in ``EXCHANGE:NAME`` form.
+
+        Returns:
+            ETF records and summary values for the symbol.
+        """
+        return await self._get_research(symbol, "etfs")
 
     async def get_corporate_calendar(
         self,
@@ -513,16 +583,49 @@ async def get_histories(
         )
 
 
-async def get_research(symbol: str, section: ResearchSection) -> dict[str, Any]:
+async def get_profile(symbol: str) -> dict[str, Any]:
     async with AsyncClient() as client:
-        return await McpService(client).get_research(symbol, section)
+        return await McpService(client).get_profile(symbol)
 
 
-async def get_research_for_symbols(
-    symbols: list[str], section: ResearchSection
-) -> dict[str, dict[str, Any]]:
+async def get_financials(symbol: str) -> dict[str, Any]:
     async with AsyncClient() as client:
-        return await McpService(client).get_research_for_symbols(symbols, section)
+        return await McpService(client).get_financials(symbol)
+
+
+async def get_forecast(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_forecast(symbol)
+
+
+async def get_technicals(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_technicals(symbol)
+
+
+async def get_holdings(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_holdings(symbol)
+
+
+async def get_ideas(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_ideas(symbol)
+
+
+async def get_documents(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_documents(symbol)
+
+
+async def get_bonds(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_bonds(symbol)
+
+
+async def get_etfs(symbol: str) -> dict[str, Any]:
+    async with AsyncClient() as client:
+        return await McpService(client).get_etfs(symbol)
 
 
 async def get_corporate_calendar(
@@ -596,8 +699,15 @@ TOOLS = (
     get_option_series,
     get_history,
     get_histories,
-    get_research,
-    get_research_for_symbols,
+    get_profile,
+    get_financials,
+    get_forecast,
+    get_technicals,
+    get_holdings,
+    get_ideas,
+    get_documents,
+    get_bonds,
+    get_etfs,
     get_corporate_calendar,
     get_news_markdown,
     get_quote_updates,
@@ -615,8 +725,15 @@ TOOL_TITLES = {
     "get_option_series": "List option series",
     "get_history": "Get price history",
     "get_histories": "Get price histories",
-    "get_research": "Get symbol research",
-    "get_research_for_symbols": "Get research for symbols",
+    "get_profile": "Get company or asset profile",
+    "get_financials": "Get financial statements",
+    "get_forecast": "Get analyst forecast",
+    "get_technicals": "Get technical analysis",
+    "get_holdings": "Get fund holdings",
+    "get_ideas": "Get published ideas",
+    "get_documents": "Get financial documents",
+    "get_bonds": "Get related bonds",
+    "get_etfs": "Get related ETFs",
     "get_corporate_calendar": "Get corporate calendar",
     "get_news_markdown": "Get news as Markdown",
     "get_quote_updates": "Sample live quote updates",
@@ -740,20 +857,27 @@ __all__ = [
     "McpService",
     "build_parser",
     "create_server",
+    "get_bonds",
     "get_corporate_calendar",
+    "get_documents",
     "get_economic_calendar",
+    "get_etfs",
+    "get_financials",
+    "get_forecast",
     "get_histories",
     "get_history",
+    "get_holdings",
+    "get_ideas",
     "get_news",
     "get_news_for_symbols",
     "get_news_markdown",
     "get_option_series",
     "get_options_chain",
+    "get_profile",
     "get_quote",
     "get_quote_updates",
     "get_quotes",
-    "get_research",
-    "get_research_for_symbols",
+    "get_technicals",
     "main",
     "query_screener",
     "search_symbols",

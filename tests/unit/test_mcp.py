@@ -27,20 +27,27 @@ from tvfinance.mcp import (
     McpService,
     build_parser,
     create_server,
+    get_bonds,
     get_corporate_calendar,
+    get_documents,
     get_economic_calendar,
+    get_etfs,
+    get_financials,
+    get_forecast,
     get_histories,
     get_history,
+    get_holdings,
+    get_ideas,
     get_news,
     get_news_for_symbols,
     get_news_markdown,
     get_option_series,
     get_options_chain,
+    get_profile,
     get_quote,
     get_quote_updates,
     get_quotes,
-    get_research,
-    get_research_for_symbols,
+    get_technicals,
     main,
     query_screener,
     search_symbols,
@@ -217,14 +224,19 @@ async def test_service_exposes_complete_client_surface() -> None:
     assert (await service.get_histories(["NASDAQ:AAPL", "NASDAQ:MSFT"], count=5))[
         "NASDAQ:AAPL"
     ][0]["close"] == 1.5
-    assert (await service.get_research("NASDAQ:AAPL", "profile"))["section"] == (
-        "profile"
-    )
-    assert (
-        await service.get_research_for_symbols(
-            ["NASDAQ:AAPL", "NASDAQ:MSFT"], "forecast"
-        )
-    )["NASDAQ:MSFT"]["section"] == "forecast"
+    research_methods = {
+        "profile": service.get_profile,
+        "financials": service.get_financials,
+        "forecast": service.get_forecast,
+        "technicals": service.get_technicals,
+        "holdings": service.get_holdings,
+        "ideas": service.get_ideas,
+        "documents": service.get_documents,
+        "bonds": service.get_bonds,
+        "etfs": service.get_etfs,
+    }
+    for section, method in research_methods.items():
+        assert (await method("NASDAQ:AAPL"))["section"] == section
     assert (
         await service.get_corporate_calendar("earnings", "2026-07-01", "2026-07-31", 9)
     )[0]["category"] == "earnings"
@@ -278,10 +290,19 @@ async def test_module_wrappers_use_scoped_clients(
     assert (await get_option_series("NASDAQ:AAPL"))[0]["root"] == "AAPL"
     assert (await get_history("NASDAQ:AAPL"))[0]["close"] == 1.5
     assert (await get_histories(["NASDAQ:AAPL"]))["NASDAQ:AAPL"]
-    assert (await get_research("NASDAQ:AAPL", "profile"))["section"] == "profile"
-    assert (await get_research_for_symbols(["NASDAQ:AAPL"], "forecast"))["NASDAQ:AAPL"][
-        "section"
-    ] == "forecast"
+    research_functions = {
+        "profile": get_profile,
+        "financials": get_financials,
+        "forecast": get_forecast,
+        "technicals": get_technicals,
+        "holdings": get_holdings,
+        "ideas": get_ideas,
+        "documents": get_documents,
+        "bonds": get_bonds,
+        "etfs": get_etfs,
+    }
+    for section, function in research_functions.items():
+        assert (await function("NASDAQ:AAPL"))["section"] == section
     assert (await get_corporate_calendar("earnings"))[0]["category"] == "earnings"
     assert (await get_news("NASDAQ:AAPL"))[0]["title"] == "Title"
     assert (await get_news_for_symbols(["NASDAQ:AAPL"]))["NASDAQ:AAPL"]
@@ -317,7 +338,7 @@ def test_create_server_registers_described_read_only_tools(
     assert server.name == "tvfinance"
     assert server.kwargs["instructions"] == MCP_INSTRUCTIONS
     assert server.kwargs["mask_error_details"] is True
-    assert len(server.tools) == len(TOOLS) == 16
+    assert len(server.tools) == len(TOOLS) == 23
     assert {options["name"] for _, options in server.tools} == {
         tool.__name__ for tool in TOOLS
     }
@@ -349,7 +370,18 @@ async def test_real_fastmcp_handshake_and_lifespan(
     server = create_server()
     async with Client(server) as protocol:
         tools = await protocol.list_tools()
-        assert len(tools) == 16
+        assert len(tools) == 23
+        assert {
+            "get_profile",
+            "get_financials",
+            "get_forecast",
+            "get_technicals",
+            "get_holdings",
+            "get_ideas",
+            "get_documents",
+            "get_bonds",
+            "get_etfs",
+        } <= {tool.name for tool in tools}
         assert all(
             tool.description and tool.title and tool.annotations for tool in tools
         )

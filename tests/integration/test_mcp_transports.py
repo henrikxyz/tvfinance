@@ -51,7 +51,7 @@ async def test_horizon_entrypoint_exposes_complete_server() -> None:
     assert module.SOURCE_ROOT == ROOT / "src"
     assert sys.path[0] == str(ROOT / "src")
     assert module.mcp.name == "tvfinance"
-    assert len(tools) == 16
+    assert len(tools) == 23
 
 
 @pytest.mark.asyncio
@@ -70,7 +70,7 @@ async def test_stdio_transport_process_handshake() -> None:
             "get_quote_updates", {"symbols": ["NASDAQ:AAPL"], "updates": 0}
         )
 
-    assert len(tools) == 16
+    assert len(tools) == 23
     assert result.data == []
 
 
@@ -117,7 +117,7 @@ async def test_streamable_http_transport_process_handshake() -> None:
         else:
             pytest.fail(f"MCP HTTP server did not become ready: {last_error}")
 
-        assert len(tools) == 16
+        assert len(tools) == 23
         assert result.data == []
     finally:
         process.terminate()
