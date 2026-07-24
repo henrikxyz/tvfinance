@@ -95,7 +95,7 @@ The optional MCP server supports local stdio clients and Streamable HTTP. It
 exposes the complete high-level async client surface with AI-readable tool
 schemas and safety instructions. See the
 [MCP guide](https://henrikxyz.github.io/TVFinance/guide/mcp/) for configuration,
-all 16 tools, and network-exposure precautions.
+all 16 tools, Prefect Horizon hosting, and network-exposure precautions.
 
 ## Development
 

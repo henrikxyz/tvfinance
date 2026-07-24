@@ -80,6 +80,32 @@ to an untrusted network. Put it behind an authenticated TLS reverse proxy and
 confirm that your provider rights permit the intended processing before allowing
 remote access.
 
+### Prefect Horizon
+
+[Prefect Horizon](https://horizon.prefect.io/) can build and host the FastMCP
+server directly from the GitHub repository. Create a Horizon server with:
+
+| Setting | Value |
+| --- | --- |
+| Repository | `henrikxyz/TVFinance` |
+| Branch | `main` |
+| Entrypoint | `server.py:mcp` |
+
+Enable Horizon authentication before sharing the generated
+`https://<server>.fastmcp.app/mcp` endpoint. Horizon supplies managed HTTPS,
+OAuth, deployment monitoring, and redeployment after pushes to `main`.
+
+The repository-level `server.py` is intentionally a small deployment adapter.
+It creates the same server as `tvfinance.mcp.create_server()`; the hosted and
+local transports therefore expose the same tools and instructions.
+
+!!! danger "Authentication is not provider permission"
+
+    Horizon controls who can connect to the MCP endpoint. It does not grant
+    permission to automate, process, store, or redistribute TradingView-derived
+    data. Keep the deployment private unless the intended use and every user are
+    covered by the necessary provider rights.
+
 ## What an AI client receives
 
 During the MCP handshake, the client receives:

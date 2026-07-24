@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import socket
 import subprocess
 import sys
@@ -9,6 +10,22 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.mark.asyncio
+async def test_horizon_entrypoint_exposes_complete_server() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "tvfinance_horizon", ROOT / "server.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    tools = await module.mcp.list_tools()
+
+    assert module.mcp.name == "tvfinance"
+    assert len(tools) == 16
 
 
 @pytest.mark.asyncio
