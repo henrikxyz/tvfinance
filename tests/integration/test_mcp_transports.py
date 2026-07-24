@@ -48,6 +48,8 @@ async def test_horizon_entrypoint_exposes_complete_server() -> None:
 
     tools = await module.mcp.list_tools()
 
+    assert module.SOURCE_ROOT == ROOT / "src"
+    assert sys.path[0] == str(ROOT / "src")
     assert module.mcp.name == "tvfinance"
     assert len(tools) == 16
 
