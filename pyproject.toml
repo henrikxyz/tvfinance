@@ -114,7 +114,6 @@ include = [
     "/*.md",
     "/.gitattributes",
     "/.gitignore",
-    "/.python-version",
     "/mkdocs.yml",
     "/pyproject.toml",
     "/uv.lock",
