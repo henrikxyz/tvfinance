@@ -14,8 +14,8 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - run: uv sync --frozen --extra mcp --group dev
       - run: uv run --frozen ruff format --check .
       - run: uv run --frozen ruff check .
